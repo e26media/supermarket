@@ -160,11 +160,11 @@ def show_dashboard():
 
     st.divider()
 
-    # ── Credit Summary ────────────────────────────────────────────────────────
-    st.subheader("🤝 Outstanding Credits")
-    credits = _api("/dashboard/credit-summary")
-    if credits:
-        df_credit = pd.DataFrame(credits)
-        st.dataframe(df_credit, use_container_width=True)
-    else:
-        st.success("✅ No outstanding credits.")
+    # # ── Credit Summary ────────────────────────────────────────────────────────
+    # st.subheader("🤝 Outstanding Credits")
+    # credits = _api("/dashboard/credit-summary")
+    # if credits:
+    #     df_credit = pd.DataFrame(credits)
+    #     st.dataframe(df_credit, use_container_width=True)
+    # else:
+    #     st.success("✅ No outstanding credits.")
