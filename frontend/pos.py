@@ -58,14 +58,20 @@ def show_pos():
         tab_barcode, tab_search = st.tabs(["📷 Barcode Scan", "🔎 Search"])
 
         with tab_barcode:
-            barcode_input = st.text_input(
+            def on_barcode_scan():
+                barcode = st.session_state.get("barcode_field", "").strip()
+                if barcode:
+                    _add_by_barcode(barcode)
+                    st.session_state["barcode_field"] = ""
+
+            st.text_input(
                 "Scan barcode (focus here & scan):",
                 key="barcode_field",
                 placeholder="Scan or type barcode…",
+                on_change=on_barcode_scan
             )
-            if st.button("➕ Add by Barcode", key="add_barcode") and barcode_input:
-                _add_by_barcode(barcode_input.strip())
-                st.session_state["barcode_field"] = ""
+            # if st.button("➕ Add by Barcode", key="add_barcode"):
+            #     on_barcode_scan()
 
         with tab_search:
             search_q = st.text_input("Search by name/category:", key="search_q")
