@@ -72,7 +72,7 @@ def _run_migrations():
     from sqlalchemy import text
 
     migrations = [
-        "ALTER TABLE products ADD COLUMN IF NOT EXISTS image_data TEXT;",
+        #"ALTER TABLE products ADD COLUMN IF NOT EXISTS image_data TEXT;",
         # Add future migrations below this line ↓
         # "ALTER TABLE products ADD COLUMN IF NOT EXISTS category TEXT;",
         # "ALTER TABLE customers ADD COLUMN IF NOT EXISTS loyalty_points INT DEFAULT 0;",

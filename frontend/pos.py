@@ -40,6 +40,23 @@ def show_pos():
     .cart-total { font-size: 1.8rem; font-weight: 700; color: #e94560; }
     .product-card { background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
                      border-radius:12px; padding:12px; margin:6px 0; }
+    /* Target Streamlit's image container */
+    [data-testid="stImage"] img {
+        height: 140px !important;
+        width: 100% !important;
+        object-fit: cover !important;
+        border-radius: 8px !important;
+    }
+    .product-placeholder {
+        height: 140px;
+        background-color: rgba(255,255,255,0.05);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        margin-bottom: 8px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -80,17 +97,26 @@ def show_pos():
                 if resp and resp.status_code == 200:
                     products = resp.json()
                     if products:
-                        for p in products[:8]:
-                            c_img, c1, c2, c3 = st.columns([1, 4, 3, 1])
-                            with c_img:
-                                if p.get("image_data"):
-                                    st.image(f"data:image/jpeg;base64,{p['image_data']}", use_container_width=True)
-                                else:
-                                    st.markdown("🖼️", unsafe_allow_html=True)
-                            c1.write(f"**{p['name']}**  \n₹{p['price']}")
-                            c2.write(f"Stock: {p['stock_qty']} {p['unit']}")
-                            if c3.button("＋", key=f"add_{p['id']}"):
-                                _add_to_cart(p)
+                        # Display products in a grid
+                        cols_per_row = 3
+                        # Increase limit since it's a grid
+                        products_to_show = products[:12]
+                        for i in range(0, len(products_to_show), cols_per_row):
+                            cols = st.columns(cols_per_row)
+                            for col, p in zip(cols, products_to_show[i:i+cols_per_row]):
+                                with col:
+                                    with st.container(border=True):
+                                        # Image
+                                        if p.get("image_data"):
+                                            st.image(f"data:image/jpeg;base64,{p['image_data']}", use_container_width=True)
+                                        else:
+                                            st.markdown('<div class="product-placeholder">🛒</div>', unsafe_allow_html=True)
+                                        
+                                        # Details
+                                        st.markdown(f"**{p['name']}**")
+                                        st.caption(f"₹{p['price']} • Stock: {p['stock_qty']} {p['unit']}")
+                                        if st.button("➕ Add", key=f"add_{p['id']}", use_container_width=True):
+                                            _add_to_cart(p)
                     else:
                         st.info("No products found.")
 
@@ -102,28 +128,94 @@ def show_pos():
             st.info("Cart is empty. Scan a product to begin.")
         else:
             for idx, item in enumerate(st.session_state.cart):
-                with st.container():
-                    c1, c2, c3, c4, c5 = st.columns([4, 1.5, 1.5, 1.5, 1])
-                    c1.write(f"**{item['name']}**")
-                    new_qty = c2.number_input(
-                        "Qty", min_value=0.0, value=float(item["qty"]),
-                        step=0.5, key=f"qty_{idx}", label_visibility="collapsed"
-                    )
-                    new_disc = c3.number_input(
-                        "Disc%", min_value=0.0, max_value=100.0, value=float(item["discount"]),
-                        step=1.0, key=f"disc_{idx}", label_visibility="collapsed"
-                    )
+                # Fetch the latest state directly bound to the widgets before rendering
+                # to prevent a 1-click visual lag on the subtotals.
+                current_qty = st.session_state.get(f"qty_{idx}", item["qty"])
+                current_disc = st.session_state.get(f"disc_{idx}", item["discount"])
+                
+                item["qty"] = current_qty
+                item["discount"] = current_disc
+                
+                subtotal = item["unit_price"] * item["qty"] * (1 - item["discount"] / 100)
+
+                with st.container(border=True):
+
+                    # ── Top row: serial + image + name + total + delete ──
+                    top_left, top_right = st.columns([3, 1])
+
+                    with top_left:
+                        if item.get("image_data"):
+                            img_html = (
+                                f"<img src='data:image/jpeg;base64,{item['image_data']}' "
+                                f"style='width:44px; height:44px; object-fit:cover; "
+                                f"border-radius:6px; display:block; flex-shrink:0;'>"
+                            )
+                        else:
+                            img_html = (
+                                "<div style='width:44px; height:44px; border-radius:6px; "
+                                "background:rgba(255,255,255,0.07); display:flex; flex-shrink:0; "
+                                "align-items:center; justify-content:center; font-size:1.3rem;'>🛒</div>"
+                            )
+
+                        st.markdown(
+                            f"<div style='display:flex; align-items:center; gap:10px;'>"
+                            f"<span style='font-size:0.85rem; font-weight:600; color:#888; "
+                            f"min-width:16px; text-align:center;'>#{idx+1}</span>"
+                            f"{img_html}"
+                            f"<div style='line-height:1.4;'>"
+                            f"<div style='font-weight:700; font-size:0.95rem;'>{item['name']}</div>"
+                            f"<div style='color:#888; font-size:0.78rem;'>₹{item['unit_price']} / unit</div>"
+                            f"</div>"
+                            f"</div>",
+                            unsafe_allow_html=True
+                        )
+
+                    with top_right:
+                        st.markdown(
+                            f"<div style='text-align:right; padding-top:4px;'>"
+                            f"<div style='font-size:0.72rem; color:#888; margin-bottom:2px;'>Total</div>"
+                            f"<div style='font-size:1.1rem; font-weight:700; color:#e94560;'>₹{subtotal:.2f}</div>"
+                            f"</div>",
+                            unsafe_allow_html=True
+                        )
+
+                    st.markdown("<div style='margin-top:8px;'>", unsafe_allow_html=True)
+
+                    # ── Bottom row: qty + disc + delete ──────────────────
+                    b1, b2, b3 = st.columns([2, 2, 1])
+
+                    with b1:
+                        new_qty = st.number_input(
+                            "Qty", min_value=0.0,
+                            value=float(item["qty"]),
+                            step=1.0 , key=f"qty_{idx}",
+                            label_visibility="visible"
+                        )
+
+                    with b2:
+                        new_disc = st.number_input(
+                            "Disc %", min_value=0, max_value=100,
+                            value=int(item["discount"]),
+                            step=1, key=f"disc_{idx}",
+                            label_visibility="visible"
+                        )
+
+                    with b3:
+                        st.markdown("<div style='padding-top:22px;'>", unsafe_allow_html=True)
+                        if st.button("🗑️ Del", key=f"del_{idx}", use_container_width=True):
+                            del st.session_state.cart[idx]
+                            st.rerun()
+                        st.markdown("</div>", unsafe_allow_html=True)
+
+                    st.markdown("</div>", unsafe_allow_html=True)
+
+                    # Handle qty = 0 removal
                     if new_qty == 0:
                         del st.session_state.cart[idx]
                         st.rerun()
                     else:
                         item["qty"] = new_qty
                         item["discount"] = new_disc
-                        subtotal = item["unit_price"] * new_qty * (1 - new_disc / 100)
-                        c4.write(f"₹{subtotal:.2f}")
-                    if c5.button("🗑️", key=f"del_{idx}"):
-                        del st.session_state.cart[idx]
-                        st.rerun()
 
     # ── RIGHT: Totals & Payment ───────────────────────────────────────────────
     with col_right:
@@ -205,6 +297,7 @@ def _add_to_cart(product: dict):
         "product_id": product["id"],
         "name": product["name"],
         "unit_price": product["price"],
+        "image_data": product.get("image_data"),
         "qty": 1,
         "discount": 0.0,
     })
