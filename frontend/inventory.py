@@ -50,6 +50,21 @@ def show_inventory():
                 ]
                 df.columns = ["ID", "Barcode", "Name", "Category", "Unit", "Price (₹)", "Tax %", "Stock", "Min Alert"]
 
+                # Clean currencies to int
+                df["Price (₹)"] = df["Price (₹)"].fillna(0).astype(int)
+                df["Tax %"] = df["Tax %"].fillna(0).astype(int)
+                
+                # Conditionally format quantities based on unit
+                def format_qty(row, col):
+                    val = row[col]
+                    if pd.isna(val): return 0
+                    if str(row["Unit"]).lower() in ["kg", "litre", "ltr"]:
+                        return round(float(val), 2)
+                    return int(val)
+                    
+                df["Stock"] = df.apply(lambda r: format_qty(r, "Stock"), axis=1)
+                df["Min Alert"] = df.apply(lambda r: format_qty(r, "Min Alert"), axis=1)
+
                 # Highlight low stock
                 def highlight_low(row):
                     color = "background-color: #000000" if row["Stock"] <= row["Min Alert"] else ""
@@ -74,9 +89,17 @@ def show_inventory():
                     new_barcode = c2.text_input("Barcode", value=selected.get("barcode") or "")
                     new_category = c1.text_input("Category", value=selected.get("category") or "")
                     new_unit = c2.text_input("Unit", value=selected.get("unit", "pcs"))
-                    new_price = c1.number_input("Price (₹)", value=float(selected["price"]), min_value=0.0, step=0.5)
-                    new_tax = c2.number_input("Tax Rate %", value=float(selected.get("tax_rate", 0)), min_value=0.0, step=0.5)
-                    new_min = c1.number_input("Min Stock Alert", value=float(selected.get("min_stock_alert", 5)), min_value=0.0, step=1.0)
+                    
+                    is_float_unit = new_unit.lower() in ["kg", "litre"]
+                    
+                    new_price = c1.number_input("Price (₹)", value=int(selected["price"]), min_value=0, step=1)
+                    new_tax = c2.number_input("Tax Rate %", value=int(selected.get("tax_rate", 0)), min_value=0, step=1)
+                    new_min = c1.number_input(
+                        "Min Stock Alert", 
+                        value=float(selected.get("min_stock_alert", 5)) if is_float_unit else int(selected.get("min_stock_alert", 5)), 
+                        min_value=0.0 if is_float_unit else 0, 
+                        step=0.5 if is_float_unit else 1
+                    )
                     new_desc = st.text_area("Description", value=selected.get("description") or "")
                     
                     if selected.get("image_data"):
@@ -133,10 +156,24 @@ def show_inventory():
         barcode = c2.text_input("Barcode (optional)", key=f"new_barcode_{st.session_state.add_reset}")
         category = c1.text_input("Category", key=f"new_category_{st.session_state.add_reset}")
         unit = c2.selectbox("Unit", ["pcs", "kg", "litre", "pack", "dozen", "box"], key=f"new_unit_{st.session_state.add_reset}")
-        price = c1.number_input("Price (₹) *", min_value=0.0, step=0.5, key=f"new_price_{st.session_state.add_reset}")
-        tax_rate = c2.number_input("Tax Rate %", 0.0, 100.0, 0.0, 0.5, key=f"new_tax_{st.session_state.add_reset}")
-        stock_qty = c1.number_input("Opening Stock", min_value=0.0, step=1.0, key=f"new_stock_{st.session_state.add_reset}")
-        min_stock = c2.number_input("Min Stock Alert", min_value=0.0, value=5.0, step=1.0, key=f"new_min_{st.session_state.add_reset}")
+        
+        is_float_unit = unit in ["kg", "litre", "ltr"]
+        
+        price = c1.number_input("Price (₹) *", min_value=0, step=1, key=f"new_price_{st.session_state.add_reset}")
+        tax_rate = c2.number_input("Tax Rate %", 0, 100, 0, 1, key=f"new_tax_{st.session_state.add_reset}")
+        stock_qty = c1.number_input(
+            "Opening Stock", 
+            min_value=0.0 if is_float_unit else 0, 
+            step=0.5 if is_float_unit else 1, 
+            key=f"new_stock_{st.session_state.add_reset}"
+        )
+        min_stock = c2.number_input(
+            "Min Stock Alert", 
+            min_value=0.0 if is_float_unit else 0, 
+            value=5.0 if is_float_unit else 5, 
+            step=0.5 if is_float_unit else 1, 
+            key=f"new_min_{st.session_state.add_reset}"
+        )
         description = st.text_area("Description (optional)", key=f"new_desc_{st.session_state.add_reset}")
         product_image = st.file_uploader("Product Image (optional, jpg/png/webp)", type=["jpg", "jpeg", "png", "webp"], key=f"add_img_{st.session_state.add_reset}")
         

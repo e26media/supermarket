@@ -114,7 +114,7 @@ def show_pos():
                                         
                                         # Details
                                         st.markdown(f"**{p['name']}**")
-                                        st.caption(f"₹{p['price']} • Stock: {p['stock_qty']} {p['unit']}")
+                                        st.caption(f"₹{int(p['price'])} • Stock: {int(p['stock_qty'])} {p['unit']}")
                                         if st.button("➕ Add", key=f"add_{p['id']}", use_container_width=True):
                                             _add_to_cart(p)
                     else:
@@ -137,6 +137,8 @@ def show_pos():
                 item["discount"] = current_disc
                 
                 subtotal = item["unit_price"] * item["qty"] * (1 - item["discount"] / 100)
+                
+                is_float_unit = item.get("unit", "pcs").lower() in ["kg", "litre", "ltr"]
 
                 with st.container(border=True):
 
@@ -164,7 +166,7 @@ def show_pos():
                             f"{img_html}"
                             f"<div style='line-height:1.4;'>"
                             f"<div style='font-weight:700; font-size:0.95rem;'>{item['name']}</div>"
-                            f"<div style='color:#888; font-size:0.78rem;'>₹{item['unit_price']} / unit</div>"
+                            f"<div style='color:#888; font-size:0.78rem;'>₹{int(item['unit_price'])} / unit</div>"
                             f"</div>"
                             f"</div>",
                             unsafe_allow_html=True
@@ -174,7 +176,7 @@ def show_pos():
                         st.markdown(
                             f"<div style='text-align:right; padding-top:4px;'>"
                             f"<div style='font-size:0.72rem; color:#888; margin-bottom:2px;'>Total</div>"
-                            f"<div style='font-size:1.1rem; font-weight:700; color:#e94560;'>₹{subtotal:.2f}</div>"
+                            f"<div style='font-size:1.1rem; font-weight:700; color:#e94560;'>₹{int(subtotal)}</div>"
                             f"</div>",
                             unsafe_allow_html=True
                         )
@@ -186,9 +188,11 @@ def show_pos():
 
                     with b1:
                         new_qty = st.number_input(
-                            "Qty", min_value=0.0,
-                            value=float(item["qty"]),
-                            step=1.0 , key=f"qty_{idx}",
+                            "Qty", 
+                            min_value=0.0 if is_float_unit else 0,
+                            value=float(item["qty"]) if is_float_unit else int(item["qty"]),
+                            step=0.5 if is_float_unit else 1, 
+                            key=f"qty_{idx}",
                             label_visibility="visible"
                         )
 
@@ -261,9 +265,9 @@ def show_pos():
         total = subtotal - disc_amount
 
         col_a, col_b = st.columns(2)
-        col_a.metric("Subtotal", f"₹{subtotal:.2f}")
-        col_a.metric("Discount", f"-₹{disc_amount:.2f}")
-        col_b.metric("🧾 TOTAL", f"₹{total:.2f}")
+        col_a.metric("Subtotal", f"₹{int(subtotal)}")
+        col_a.metric("Discount", f"-₹{int(disc_amount)}")
+        col_b.metric("🧾 TOTAL", f"₹{int(total)}")
 
         st.divider()
 
@@ -290,7 +294,8 @@ def _add_by_barcode(barcode: str):
 def _add_to_cart(product: dict):
     for item in st.session_state.cart:
         if item["product_id"] == product["id"]:
-            item["qty"] += 1
+            is_float_unit = item.get("unit", "pcs").lower() in ["kg", "litre", "ltr"]
+            item["qty"] += 1.0 if is_float_unit else 1
             st.toast(f"Updated qty: {item['name']}")
             return
     st.session_state.cart.append({
@@ -298,7 +303,8 @@ def _add_to_cart(product: dict):
         "name": product["name"],
         "unit_price": product["price"],
         "image_data": product.get("image_data"),
-        "qty": 1,
+        "unit": product.get("unit", "pcs"),
+        "qty": 1.0 if product.get("unit", "pcs").lower() in ["kg", "litre", "ltr"] else 1,
         "discount": 0.0,
     })
     st.toast(f"Added: {product['name']}")
