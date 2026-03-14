@@ -2,7 +2,7 @@
 models/product.py — Supermarket product / SKU
 """
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy import Column, Integer, String, Float, DateTime, Text
 from backend.database import Base
 
 
@@ -13,6 +13,7 @@ class Product(Base):
     barcode = Column(String(50), unique=True, nullable=True, index=True)
     name = Column(String(150), nullable=False, index=True)
     category = Column(String(80), nullable=True)
+    image_data = Column(Text, nullable=True)
     unit = Column(String(20), default="pcs")      # pcs, kg, litre…
     price = Column(Float, nullable=False)
     tax_rate = Column(Float, default=0.0)          # percentage e.g. 5.0

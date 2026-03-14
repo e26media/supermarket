@@ -5,6 +5,7 @@ import streamlit as st
 import requests
 import os
 import pandas as pd
+import base64
 
 from config import API_BASE
 
@@ -77,17 +78,26 @@ def show_inventory():
                     new_tax = c2.number_input("Tax Rate %", value=float(selected.get("tax_rate", 0)), min_value=0.0, step=0.5)
                     new_min = c1.number_input("Min Stock Alert", value=float(selected.get("min_stock_alert", 5)), min_value=0.0, step=1.0)
                     new_desc = st.text_area("Description", value=selected.get("description") or "")
+                    
+                    if selected.get("image_data"):
+                        st.image(f"data:image/jpeg;base64,{selected['image_data']}", caption="Current Image", width=150)
+                    new_image = st.file_uploader("Upload New Image (optional, jpg/png/webp)", type=["jpg", "jpeg", "png","webp"], key=f"edit_img_{selected['id']}")
 
                     c_save, c_delete = st.columns(2)
                     save = c_save.form_submit_button("💾 Save Changes", use_container_width=True)
                     delete = c_delete.form_submit_button("🗑️ Delete Product", use_container_width=True)
 
                 if save:
+                    image_b64 = selected.get("image_data")
+                    if new_image is not None:
+                        image_b64 = base64.b64encode(new_image.read()).decode("utf-8")
+                    
                     payload = {
                         "name": new_name, "barcode": new_barcode or None,
                         "category": new_category, "unit": new_unit,
                         "price": new_price, "tax_rate": new_tax,
                         "min_stock_alert": new_min, "description": new_desc,
+                        "image_data": image_b64,
                     }
                     r = _api("put", f"/products/{selected['id']}", json=payload)
                     if r and r.status_code == 200:
@@ -110,33 +120,52 @@ def show_inventory():
     # ── ADD PRODUCT ───────────────────────────────────────────────────────────
     with tab_add:
         st.subheader("➕ Add New Product")
-        with st.form("add_product_form"):
-            c1, c2 = st.columns(2)
-            name = c1.text_input("Product Name *")
-            barcode = c2.text_input("Barcode (optional)")
-            category = c1.text_input("Category")
-            unit = c2.selectbox("Unit", ["pcs", "kg", "litre", "pack", "dozen", "box"])
-            price = c1.number_input("Price (₹) *", min_value=0.0, step=0.5)
-            tax_rate = c2.number_input("Tax Rate %", 0.0, 100.0, 0.0, 0.5)
-            stock_qty = c1.number_input("Opening Stock", min_value=0.0, step=1.0)
-            min_stock = c2.number_input("Min Stock Alert", min_value=0.0, value=5.0, step=1.0)
-            description = st.text_area("Description (optional)")
-            submitted = st.form_submit_button("✅ Add Product", use_container_width=True)
+        
+        if "add_reset" not in st.session_state:
+            st.session_state.add_reset = 0
+            
+        if "add_success" in st.session_state:
+            st.success(st.session_state.add_success)
+            del st.session_state.add_success
+
+        c1, c2 = st.columns(2)
+        name = c1.text_input("Product Name *", key=f"new_name_{st.session_state.add_reset}")
+        barcode = c2.text_input("Barcode (optional)", key=f"new_barcode_{st.session_state.add_reset}")
+        category = c1.text_input("Category", key=f"new_category_{st.session_state.add_reset}")
+        unit = c2.selectbox("Unit", ["pcs", "kg", "litre", "pack", "dozen", "box"], key=f"new_unit_{st.session_state.add_reset}")
+        price = c1.number_input("Price (₹) *", min_value=0.0, step=0.5, key=f"new_price_{st.session_state.add_reset}")
+        tax_rate = c2.number_input("Tax Rate %", 0.0, 100.0, 0.0, 0.5, key=f"new_tax_{st.session_state.add_reset}")
+        stock_qty = c1.number_input("Opening Stock", min_value=0.0, step=1.0, key=f"new_stock_{st.session_state.add_reset}")
+        min_stock = c2.number_input("Min Stock Alert", min_value=0.0, value=5.0, step=1.0, key=f"new_min_{st.session_state.add_reset}")
+        description = st.text_area("Description (optional)", key=f"new_desc_{st.session_state.add_reset}")
+        product_image = st.file_uploader("Product Image (optional, jpg/png/webp)", type=["jpg", "jpeg", "png", "webp"], key=f"add_img_{st.session_state.add_reset}")
+        
+        submitted = st.button("✅ Add Product", use_container_width=True)
 
         if submitted:
             if not name or price == 0:
                 st.warning("Name and price are required.")
             else:
+                image_b64 = None
+                if product_image is not None:
+                    image_b64 = base64.b64encode(product_image.read()).decode("utf-8")
+                
                 payload = {
                     "name": name, "barcode": barcode or None,
                     "category": category, "unit": unit,
                     "price": price, "tax_rate": tax_rate,
                     "stock_qty": stock_qty, "min_stock_alert": min_stock,
                     "description": description or None,
+                    "image_data": image_b64,
                 }
                 r = _api("post", "/products/", json=payload)
                 if r and r.status_code == 201:
-                    st.success(f"✅ Product '{name}' added successfully!")
+                    st.session_state.add_success = f"✅ Product '{name}' added successfully!"
+                    # Streamlit forbids directly changing session_state keys associated with un-rendered widgets
+                    # if the widget hasn't rendered yet or is bound.
+                    # Best way is to increment the reset counter to spawn fresh widgets with new keys.
+                    st.session_state.add_reset += 1
+                    st.rerun()
                 else:
                     try:
                         detail = r.json().get("detail", r.text) if r else "No response"

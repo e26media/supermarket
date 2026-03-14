@@ -7,6 +7,7 @@ class ProductCreate(BaseModel):
     barcode: Optional[str] = None
     name: str
     category: Optional[str] = None
+    image_data: Optional[str] = None
     unit: str = "pcs"
     price: float
     tax_rate: float = 0.0
@@ -19,6 +20,7 @@ class ProductUpdate(BaseModel):
     barcode: Optional[str] = None
     name: Optional[str] = None
     category: Optional[str] = None
+    image_data: Optional[str] = None
     unit: Optional[str] = None
     price: Optional[float] = None
     tax_rate: Optional[float] = None
@@ -32,6 +34,7 @@ class ProductResponse(BaseModel):
     barcode: Optional[str]
     name: str
     category: Optional[str]
+    image_data: Optional[str]
     unit: str
     price: float
     tax_rate: float

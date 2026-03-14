@@ -81,8 +81,13 @@ def show_pos():
                     products = resp.json()
                     if products:
                         for p in products[:8]:
-                            c1, c2, c3 = st.columns([4, 2, 1])
-                            c1.write(f"**{p['name']}** — ₹{p['price']}")
+                            c_img, c1, c2, c3 = st.columns([1, 4, 3, 1])
+                            with c_img:
+                                if p.get("image_data"):
+                                    st.image(f"data:image/jpeg;base64,{p['image_data']}", use_container_width=True)
+                                else:
+                                    st.markdown("🖼️", unsafe_allow_html=True)
+                            c1.write(f"**{p['name']}**  \n₹{p['price']}")
                             c2.write(f"Stock: {p['stock_qty']} {p['unit']}")
                             if c3.button("＋", key=f"add_{p['id']}"):
                                 _add_to_cart(p)

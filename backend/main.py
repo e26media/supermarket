@@ -4,8 +4,9 @@ backend/main.py — FastAPI application entry point.
 Startup:
   1. Load .env
   2. Create DB tables (if not exist)
-  3. Include all routers
-  4. Seed default admin user if no users exist
+  3. Run schema migrations
+  4. Include all routers
+  5. Seed default admin user if no users exist
 """
 import os
 import logging
@@ -41,7 +42,7 @@ app = FastAPI(
 # ── CORS — allow Streamlit frontend ───────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for deployment flexibility
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -62,7 +63,30 @@ def on_startup():
     logger.info("Creating database tables…")
     Base.metadata.create_all(bind=engine)
     logger.info("Tables ready.")
+    _run_migrations()        # ← NEW LINE ADDED
     _seed_default_admin()
+
+# If we want add any extra column in database (migrations) we can add it here
+def _run_migrations():
+    """Run safe, idempotent schema migrations on every startup."""
+    from sqlalchemy import text
+
+    migrations = [
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS image_data TEXT;",
+        # Add future migrations below this line ↓
+        # "ALTER TABLE products ADD COLUMN IF NOT EXISTS category TEXT;",
+        # "ALTER TABLE customers ADD COLUMN IF NOT EXISTS loyalty_points INT DEFAULT 0;",
+    ]
+
+    with engine.connect() as conn:
+        for migration in migrations:
+            try:
+                conn.execute(text(migration))
+                conn.commit()
+                logger.info(f"✅ Migration applied: {migration[:60]}…")
+            except Exception as e:
+                logger.warning(f"⚠️  Migration warning: {e}")
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
 def _seed_default_admin():
