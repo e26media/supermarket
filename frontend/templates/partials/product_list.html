@@ -1,0 +1,38 @@
+{% if products %}
+  {% for p in products %}
+  <div class="product-card {% if p.stock_qty <= 0 %}out-of-stock{% endif %}">
+    <div class="prod-img">
+      {% if p.image_data %}
+        <img src="data:image/jpeg;base64,{{ p.image_data }}" alt="{{ p.name }}" loading="lazy">
+      {% else %}
+        🛒
+      {% endif %}
+    </div>
+    <div class="prod-name" title="{{ p.name }}">{{ p.name }}</div>
+    <div class="prod-price">₹{{ p.price | int }}</div>
+    <div class="prod-stock">
+      {% if p.stock_qty <= 0 %}
+        <span style="color:var(--accent)">Out of stock</span>
+      {% elif p.stock_qty <= p.min_stock_alert %}
+        <span style="color:#f39c12">Low: {{ p.stock_qty }} {{ p.unit }}</span>
+      {% else %}
+        {{ p.stock_qty if p.unit in ['kg','litre','ltr'] else p.stock_qty | int }} {{ p.unit }}
+      {% endif %}
+    </div>
+    {% if p.stock_qty > 0 %}
+    <button class="prod-add"
+            hx-post="/pos/cart/add/{{ p.id }}"
+            hx-target="#cart-section"
+            hx-swap="innerHTML"
+            onclick="showToast('Added: {{ p.name }}', 'success')">
+      ＋ Add
+    </button>
+    {% endif %}
+  </div>
+  {% endfor %}
+{% else %}
+  <div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-muted);">
+    <div style="font-size:2.5rem; margin-bottom:10px;">📦</div>
+    <div>No products found</div>
+  </div>
+{% endif %}

@@ -1,0 +1,165 @@
+<!-- partials/cart.html -->
+<div class="card" style="display:flex; flex-direction:column; height:100%; gap:0;">
+
+  <!-- Header -->
+  <div class="card-header" style="padding-bottom:10px; border-bottom:1px solid var(--border); margin-bottom:0;">
+    <div class="card-title">
+      🧾 Cart
+      {% if cart %}
+        <span style="font-size:0.72rem; font-weight:400; color:var(--text-muted); margin-left:6px;">
+          {{ cart|length }} item(s)
+        </span>
+      {% endif %}
+    </div>
+    {% if cart %}
+    <button class="btn btn-danger btn-sm"
+            hx-delete="/pos/cart"
+            hx-target="#cart-section"
+            hx-swap="innerHTML"
+            hx-confirm="Clear entire cart?">
+      🗑️ Clear
+    </button>
+    {% endif %}
+  </div>
+
+  {% if cart %}
+
+  <!-- Column headers -->
+  <div class="cart-col-header">
+    <div></div>
+    <div>Product</div>
+    <div class="cart-col-label" style="text-align:center;">Qty</div>
+    <div class="cart-col-label" style="text-align:center;">Disc%</div>
+    <div class="cart-col-label" style="text-align:right;">Total</div>
+    <div></div>
+  </div>
+
+  <!-- Cart rows -->
+  <div class="cart-scroll">
+    {% for item in cart %}
+    {% set is_float = item.unit|lower in ['kg','litre','ltr'] %}
+    {% set line_total = (item.unit_price * item.qty * (1 - item.discount / 100)) %}
+
+    <div class="cart-row-item">
+
+      <!-- Image -->
+      <div class="cart-img">
+        {% if item.image_data %}
+          <img src="data:image/jpeg;base64,{{ item.image_data }}" alt="{{ item.name }}">
+        {% else %}
+          🛒
+        {% endif %}
+      </div>
+
+      <!-- Name + unit price + measure -->
+      <div>
+        <div class="cart-name">
+          <span class="cart-index">#{{ loop.index }}</span>
+          {{ item.name }}
+        </div>
+        <div class="cart-meta">
+          ₹{{ item.unit_price|int }} / {{ item.unit }}
+        </div>
+      </div>
+
+      <!-- Qty controls -->
+      <div class="cart-qty-wrap">
+        <button class="qty-btn"
+                hx-patch="/pos/cart/qty/{{ item.product_id }}?delta=-1{% if is_float %}&float=1{% endif %}"
+                hx-target="#cart-section" hx-swap="innerHTML">−</button>
+        <span class="cart-qty-val">
+          {{ "%.1f"|format(item.qty) if is_float else item.qty|int }}
+        </span>
+        <button class="qty-btn"
+                hx-patch="/pos/cart/qty/{{ item.product_id }}?delta=1{% if is_float %}&float=1{% endif %}"
+                hx-target="#cart-section" hx-swap="innerHTML">+</button>
+      </div>
+
+      <!-- Discount -->
+      <div class="cart-disc-wrap">
+        <input type="number" value="{{ item.discount|int }}"
+               min="0" max="100" placeholder="0"
+               class="cart-disc-input"
+               hx-patch="/pos/cart/discount/{{ item.product_id }}"
+               hx-trigger="change"
+               hx-target="#cart-section" hx-swap="innerHTML"
+               name="discount">
+      </div>
+
+      <!-- Line total -->
+      <div class="cart-line-total">₹{{ line_total|int }}</div>
+
+      <!-- Delete -->
+      <button class="cart-del"
+              hx-delete="/pos/cart/item/{{ item.product_id }}"
+              hx-target="#cart-section" hx-swap="innerHTML"
+              title="Remove">✕</button>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Cart Summary -->
+  {% set subtotal   = cart|sum(attribute='subtotal') %}
+  {% set disc_amt   = subtotal * (cart_discount / 100) %}
+  {% set after_disc = subtotal - disc_amt %}
+  {% set gst_rate   = 0.05 %}
+  {% set gst_amt    = after_disc * gst_rate %}
+  {% set grand      = after_disc %}
+
+  <div class="cart-summary">
+
+    <div class="cart-sum-row">
+      <span>Subtotal</span>
+      <span>₹{{ subtotal|int }}</span>
+    </div>
+
+    <div class="cart-sum-row">
+      <span style="display:flex; align-items:center; gap:6px;">
+        Cart Discount
+        <input type="number"
+               value="{{ cart_discount|default(0)|int }}"
+               min="0" max="100"
+               class="cart-disc-input"
+               style="width:40px;"
+               hx-patch="/pos/cart/cart-discount"
+               hx-trigger="change"
+               hx-target="#cart-section" hx-swap="innerHTML"
+               name="discount">%
+      </span>
+      <span style="color:#e94560;">−₹{{ disc_amt|int }}</span>
+    </div>
+
+    <div class="cart-sum-row">
+      <span>GST (5%)</span>
+      <span style="color:var(--text-muted);">₹{{ gst_amt|int }}</span>
+    </div>
+
+    <div class="cart-sum-divider"></div>
+
+    <div class="cart-sum-row cart-grand-total">
+      <span>Grand Total</span>
+      <span>₹{{ grand|int }}</span>
+    </div>
+
+    <button class="btn btn-primary btn-full btn-xl"
+            style="margin-top:12px;"
+            onclick="openPaymentModal()">
+      💳 Complete Purchase
+    </button>
+
+  </div>
+
+  {% else %}
+
+  <!-- Empty state -->
+  <div class="cart-empty">
+    <div style="font-size:2.8rem;">🛒</div>
+    <div style="font-weight:600; font-size:0.9rem;">Cart is empty</div>
+    <div style="font-size:0.78rem; color:var(--text-muted); text-align:center;">
+      Scan a barcode or click<br>a product to add it
+    </div>
+  </div>
+
+  {% endif %}
+</div>

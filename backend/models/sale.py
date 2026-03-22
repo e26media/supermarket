@@ -40,3 +40,7 @@ class Sale(Base):
     items = relationship("SaleItem", back_populates="sale", cascade="all, delete-orphan")
     customer = relationship("Customer")
     cashier = relationship("User")
+
+    @property
+    def customer_name(self) -> str | None:
+        return self.customer.name if self.customer else None

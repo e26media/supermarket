@@ -1,0 +1,70 @@
+<!-- Modal Step 4: Receipt -->
+<div class="modal-backdrop">
+  <div class="modal" style="max-width:480px;" id="receipt-modal">
+    <div class="modal-title" style="text-align:center;">🧾 Sale Complete!</div>
+    <div class="modal-step-indicator">
+      <div class="modal-step-dot active"></div>
+      <div class="modal-step-dot active"></div>
+      <div class="modal-step-dot active"></div>
+      <div class="modal-step-dot active"></div>
+    </div>
+
+    <!-- Receipt body -->
+    <div id="receipt-print" style="background:var(--surface2); border-radius:var(--radius-sm);
+                                    padding:16px; margin:16px 0; font-size:0.82rem; line-height:1.7;">
+      <div style="text-align:center; margin-bottom:12px;">
+        <div style="font-size:1.1rem; font-weight:700; color:#fff;">Salethur Supermarket</div>
+        <div style="color:var(--text-muted); font-size:0.75rem;">POS + CRM System &mdash; E26</div>
+        <div style="color:var(--text-muted); font-size:0.72rem;">{{ created_at }}</div>
+      </div>
+      <div class="divider"></div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:4px; color:var(--text-muted); font-size:0.72rem; font-weight:600; text-transform:uppercase;">
+        <span>Item</span><span>Qty</span><span>Price</span><span>Total</span>
+      </div>
+      {% for item in items %}
+      <div style="display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px solid rgba(255,255,255,0.04);">
+        <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:160px;">{{ item.name }}</span>
+        <span style="min-width:40px; text-align:center;">{{ item.qty }}</span>
+        <span style="min-width:60px; text-align:right;">₹{{ item.unit_price | int }}</span>
+        <span style="min-width:60px; text-align:right; font-weight:600;">₹{{ item.subtotal | int }}</span>
+      </div>
+      {% endfor %}
+      <div class="divider"></div>
+      <div style="display:flex; justify-content:space-between; color:var(--text-muted);">
+        <span>Subtotal</span><span>₹{{ subtotal | int }}</span>
+      </div>
+      {% if discount > 0 %}
+      <div style="display:flex; justify-content:space-between; color:#f39c12;">
+        <span>Discount</span><span>−₹{{ discount | int }}</span>
+      </div>
+      {% endif %}
+      {% if tax > 0 %}
+      <div style="display:flex; justify-content:space-between; color:var(--text-muted);">
+        <span>GST</span><span>₹{{ tax | int }}</span>
+      </div>
+      {% endif %}
+      <div style="display:flex; justify-content:space-between; font-size:1.05rem; font-weight:700; color:var(--accent); margin-top:6px;">
+        <span>TOTAL</span><span>₹{{ total | int }}</span>
+      </div>
+      <div class="divider"></div>
+      <div style="display:flex; justify-content:space-between; color:var(--text-muted); font-size:0.75rem;">
+        <span>Payment: {{ payment_mode | upper }}</span>
+        <span>Sale #{{ sale_id }}</span>
+      </div>
+      {% if customer_name %}
+      <div style="color:var(--text-muted); font-size:0.75rem;">Customer: {{ customer_name }}</div>
+      {% endif %}
+      <div style="text-align:center; margin-top:10px; font-size:0.72rem; color:rgba(255,255,255,0.25);">
+        Thank you for shopping with us!
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-secondary" onclick="window.print()">🖨️ Print</button>
+      <button class="btn btn-primary" style="flex:1"
+              onclick="closeModal(); htmx.ajax('GET','/pos/cart',{target:'#cart-section',swap:'innerHTML'})">
+        ✅ Done — New Sale
+      </button>
+    </div>
+  </div>
+</div>

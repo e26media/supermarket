@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Inventory — Salethur Supermarket{% endblock %}
+{% block page_title %}📦 Inventory{% endblock %}
+
+{% block content %}
+<div>
+  <!-- ── Tabs ──────────────────────────────────────────────── -->
+  <div class="inv-tabs">
+    <div class="inv-tab active" id="tab-list" onclick="switchInvTab('list', this)"
+         hx-get="/inventory/products"
+         hx-target="#inv-content"
+         hx-swap="innerHTML">
+      📋 Product List
+    </div>
+    <div class="inv-tab" id="tab-add" onclick="switchInvTab('add', this)"
+         hx-get="/inventory/add-form"
+         hx-target="#inv-content"
+         hx-swap="innerHTML">
+      ➕ Add Product
+    </div>
+    <div class="inv-tab" id="tab-restock" onclick="switchInvTab('restock', this)"
+         hx-get="/inventory/restock-form"
+         hx-target="#inv-content"
+         hx-swap="innerHTML">
+      🔄 Restock
+    </div>
+    <div class="inv-tab" id="tab-alerts" onclick="switchInvTab('alerts', this)"
+         hx-get="/inventory/stock-alerts"
+         hx-target="#inv-content"
+         hx-swap="innerHTML">
+      ⚠️ Stock Alerts
+    </div>
+  </div>
+
+  <!-- ── Content area ─────────────────────────────────────── -->
+  <div id="inv-content"
+       hx-get="/inventory/products"
+       hx-trigger="load"
+       hx-swap="innerHTML">
+    <div style="text-align:center; padding:40px; color:var(--text-muted);">
+      <span class="spinner"></span> Loading inventory…
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function switchInvTab(tab, el) {
+  document.querySelectorAll('.inv-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+</script>
+{% endblock %}

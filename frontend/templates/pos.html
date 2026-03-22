@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}POS Billing — Salethur Supermarket{% endblock %}
+{% block page_title %}🛒 Billing Counter{% endblock %}
+
+{% block topbar_extra %}
+<div class="topbar-barcode-input" title="Barcode scanner — scan or type here">
+  <span>📷</span>
+  <input id="barcode-field" type="text" placeholder="Scan barcode…"
+         autocomplete="off"
+         onkeydown="if(event.key==='Enter'){processBarcode(this.value);this.value=''}">
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="pos-layout">
+
+  <!-- ══ LEFT PANEL ══════════════════════════════════════════ -->
+  <div class="pos-left">
+
+    <!-- Filter tabs + search -->
+    <div class="card" style="padding:12px 16px;">
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <div class="filter-tabs" id="filter-tabs">
+          <div class="filter-tab active" onclick="setFilterTab(this,'all')"
+               hx-get="/pos/products?status=all"
+               hx-target="#product-list" hx-swap="innerHTML"
+               hx-indicator="#prod-spinner">All</div>
+          <div class="filter-tab" onclick="setFilterTab(this,'in_stock')"
+               hx-get="/pos/products?status=in_stock"
+               hx-target="#product-list" hx-swap="innerHTML"
+               hx-indicator="#prod-spinner">In Stock</div>
+          <div class="filter-tab" onclick="setFilterTab(this,'low_stock')"
+               hx-get="/pos/products?status=low_stock"
+               hx-target="#product-list" hx-swap="innerHTML"
+               hx-indicator="#prod-spinner">Low Stock</div>
+          <div class="filter-tab" onclick="setFilterTab(this,'out_of_stock')"
+               hx-get="/pos/products?status=out_of_stock"
+               hx-target="#product-list" hx-swap="innerHTML"
+               hx-indicator="#prod-spinner">Out of Stock</div>
+        </div>
+
+        <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+          <span class="htmx-indicator spinner" id="prod-spinner"></span>
+          <input type="search" class="form-control" style="width:200px;"
+                 placeholder="🔍 Search products…"
+                 name="q"
+                 hx-get="/pos/search"
+                 hx-trigger="keyup changed delay:300ms"
+                 hx-target="#product-list"
+                 hx-swap="innerHTML"
+                 hx-indicator="#prod-spinner">
+        </div>
+      </div>
+    </div>
+
+    <!-- Product grid -->
+    <div class="card" style="flex:1; overflow:hidden; display:flex; flex-direction:column; padding:12px;">
+      <div class="product-grid" id="product-list"
+           hx-get="/pos/products?status=all"
+           hx-trigger="load"
+           hx-swap="innerHTML">
+        <div style="color:var(--text-muted); padding:20px; text-align:center;">
+          <span class="spinner"></span> Loading products…
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Bills -->
+    <div class="card" style="max-height:200px; overflow:hidden;">
+      <div class="card-header">
+        <div class="card-title">🕐 Recent Bills</div>
+        <span class="htmx-indicator spinner" id="bills-spinner"></span>
+      </div>
+      <div id="recent-bills"
+           hx-get="/pos/recent-bills"
+           hx-trigger="load, every 30s"
+           hx-swap="innerHTML"
+           hx-indicator="#bills-spinner"
+           style="overflow-y:auto; max-height:130px;">
+        <div style="color:var(--text-muted); font-size:0.8rem;">Loading…</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ RIGHT PANEL (CART) ═══════════════════════════════════ -->
+  <div class="pos-right">
+    <div id="cart-section"
+         hx-get="/pos/cart"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+      <div style="color:var(--text-muted); text-align:center; padding:40px;">
+        <span class="spinner"></span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Payment modal mount point -->
+<div id="modal-container"></div>
+{% endblock %}

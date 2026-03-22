@@ -1,0 +1,14 @@
+{% if bills %}
+  {% for b in bills %}
+  <div class="bill-card">
+    <div class="bill-icon">🧾</div>
+    <div class="bill-info">
+      <div class="bill-customer">{{ b.customer_name or 'Walk-in' }}</div>
+      <div class="bill-meta">#{{ b.id }} &middot; {{ b.item_count }} items &middot; {{ b.payment_mode }}</div>
+    </div>
+    <div class="bill-total">₹{{ b.total | int }}</div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div style="color:var(--text-muted); font-size:0.8rem; padding:8px 0;">No recent bills</div>
+{% endif %}

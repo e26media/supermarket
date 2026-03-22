@@ -1,7 +1,7 @@
 """
 services/dashboard_service.py — Aggregate KPIs for the admin dashboard.
 """
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 from backend.models.sale import Sale, PaymentStatus
@@ -14,11 +14,30 @@ from backend.models.credit_ledger import CreditLedger
 class DashboardService:
 
     @staticmethod
-    def daily_summary(db: Session, target_date: date = None) -> dict:
-        if not target_date:
-            target_date = date.today()
-        start = datetime.combine(target_date, datetime.min.time())
-        end = datetime.combine(target_date, datetime.max.time())
+    def daily_summary(db: Session, target_date: date = None, period: str = None) -> dict:
+        if period:
+            today = date.today()
+            if period == "week":
+                start_d = today - timedelta(days=today.weekday())
+                end_d = today
+            elif period == "month":
+                start_d = today.replace(day=1)
+                end_d = today
+            elif period == "year":
+                start_d = today.replace(month=1, day=1)
+                end_d = today
+            else:
+                start_d = today
+                end_d = today
+            start = datetime.combine(start_d, datetime.min.time())
+            end = datetime.combine(end_d, datetime.max.time())
+            date_str = period
+        else:
+            if not target_date:
+                target_date = date.today()
+            start = datetime.combine(target_date, datetime.min.time())
+            end = datetime.combine(target_date, datetime.max.time())
+            date_str = str(target_date)
 
         sales = db.query(Sale).filter(
             Sale.created_at >= start,
@@ -34,7 +53,7 @@ class DashboardService:
         credit_total = sum(s.total for s in sales if s.payment_mode.value == "credit")
 
         return {
-            "date": str(target_date),
+            "date": date_str,
             "total_revenue": round(total_revenue, 2),
             "total_transactions": total_transactions,
             "payment_breakdown": {

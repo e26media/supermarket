@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Customers — Salethur Supermarket{% endblock %}
+{% block page_title %}👥 Customers{% endblock %}
+
+{% block content %}
+<div class="customer-layout">
+
+  <!-- ── Customer Table ──────────────────────────────────────── -->
+  <div class="card" style="display:flex; flex-direction:column; overflow:hidden;">
+    <div class="card-header">
+      <div class="card-title">Customer Directory</div>
+      <input type="search" class="form-control" style="width:220px;"
+             placeholder="🔍 Search name / phone…"
+             hx-get="/customers/search"
+             hx-trigger="keyup changed delay:300ms"
+             hx-target="#customer-table-body"
+             hx-swap="innerHTML"
+             name="q">
+    </div>
+    <div style="overflow-y:auto; flex:1;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Orders</th>
+            <th>Total Spent</th>
+            <th>Last Purchase</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="customer-table-body"
+               hx-get="/customers/list"
+               hx-trigger="load"
+               hx-swap="innerHTML">
+          <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:20px;">
+            <span class="spinner"></span> Loading…
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Customer Insights Panel ────────────────────────────── -->
+  <div class="customer-insights">
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px;">Customer Insights</div>
+      <div id="customer-insights-content" style="color:var(--text-muted); font-size:0.83rem; text-align:center; padding:20px 0;">
+        <div style="font-size:2rem; margin-bottom:8px;">👆</div>
+        Click a customer to view insights
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

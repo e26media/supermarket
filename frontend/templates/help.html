@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Help — Salethur Supermarket{% endblock %}
+{% block page_title %}❓ Help & Support{% endblock %}
+
+{% block content %}
+<div class="help-grid">
+
+  <!-- ── FAQ ─────────────────────────────── -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">💬 Frequently Asked Questions</div>
+    </div>
+    {% for q, a in [
+      ("How do I add a product to the cart?", "Scan the barcode with the scanner, or use the billing page search box to find the product, then click '+ Add'."),
+      ("How do I process a credit sale?", "In the payment step, select 'Credit' as the payment method and enter the customer's phone number to link the sale."),
+      ("How do I restock a product?", "Go to Inventory → Restock tab, select the product and enter the quantity received from supplier."),
+      ("How do I apply a discount?", "Each cart item has a Disc% field. You can also apply an overall cart discount from the totals section."),
+      ("How do I print a receipt?", "After completing a sale, click the 🖨️ Print button in the receipt modal. Make sure the thermal printer is connected."),
+      ("How do I view sales for a specific date?", "Navigate to Analytics and use the date range selector to filter by week, month, or year."),
+      ("How do I add a new user?", "User management is handled directly in the database. Contact your system administrator."),
+      ("Why is my barcode not scanning?", "Make sure the barcode field in the topbar is focused (click it once). USB scanners should work automatically."),
+    ] %}
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">{{ q }}</div>
+      <div class="faq-a">{{ a }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ── Guides ──────────────────────────── -->
+  <div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header">
+        <div class="card-title">📚 Guides & Tutorials</div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        {% for icon, title, desc in [
+          ("🎥", "Video: Getting Started", "5-minute walkthrough of the POS system"),
+          ("📄", "PDF: Full User Manual", "Complete reference guide — 28 pages"),
+          ("📋", "How-To: Inventory Management", "Adding, editing, restocking products"),
+          ("📋", "How-To: End of Day Report", "Print daily summary and close shift"),
+          ("📋", "How-To: Credit Management", "Managing customer credit and payments"),
+        ] %}
+        <div style="display:flex; align-items:center; gap:12px; padding:10px;
+                    background:var(--surface2); border-radius:var(--radius-sm);
+                    border:1px solid var(--border); cursor:pointer;
+                    transition:border-color var(--transition);"
+             onmouseover="this.style.borderColor='var(--accent)'"
+             onmouseout="this.style.borderColor='var(--border)'"
+             onclick="showToast('Coming soon', 'info')">
+          <span style="font-size:1.5rem;">{{ icon }}</span>
+          <div>
+            <div style="font-size:0.85rem; font-weight:600; color:#fff;">{{ title }}</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">{{ desc }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📞 Contact Support</div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px; font-size:0.84rem;">
+        <div style="display:flex; gap:10px; align-items:center;">
+          <span style="font-size:1.2rem;">📧</span>
+          <span style="color:var(--text-muted);">support@e26supermarket.in</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <span style="font-size:1.2rem;">📱</span>
+          <span style="color:var(--text-muted);">+91 98765 43210</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <span style="font-size:1.2rem;">🕐</span>
+          <span style="color:var(--text-muted);">Mon – Sat, 9:00 AM – 6:00 PM</span>
+        </div>
+        <button class="btn btn-primary" style="margin-top:8px;" onclick="showToast('Support request coming soon', 'info')">
+          📩 Submit a Request
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Troubleshooting -->
+<div class="card" style="margin-top:16px;">
+  <div class="card-header">
+    <div class="card-title">🔧 Troubleshooting</div>
+  </div>
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:12px;">
+    {% for icon, title, steps in [
+      ("🖨️", "Printer not working", ["Check USB connection", "Ensure printer is powered on", "Restart the POS system"]),
+      ("⚖️", "Scale not responding", ["Check serial/USB connection", "Verify COM port in settings", "Try restarting the scale"]),
+      ("🌐", "Backend unreachable", ["Check internet / network", "Verify BACKEND_URL in .env", "Ensure the API server is running"]),
+      ("💳", "Card payment failing", ["Check Pine Labs terminal power", "Verify network connection on terminal", "Try again or switch to cash"]),
+    ] %}
+    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px;">
+      <div style="font-size:1.3rem; margin-bottom:6px;">{{ icon }}</div>
+      <div style="font-size:0.85rem; font-weight:600; color:#fff; margin-bottom:8px;">{{ title }}</div>
+      <ol style="font-size:0.78rem; color:var(--text-muted); padding-left:16px; line-height:1.8;">
+        {% for step in steps %}<li>{{ step }}</li>{% endfor %}
+      </ol>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

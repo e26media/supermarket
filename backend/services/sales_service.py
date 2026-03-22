@@ -16,6 +16,18 @@ class SalesService:
 
     @staticmethod
     def create_sale(db: Session, data: SaleCreate, user_id: int) -> Sale:
+        if not data.customer_id and data.customer_phone:
+            customer = db.query(Customer).filter(Customer.phone == data.customer_phone).first()
+            if not customer:
+                customer = Customer(
+                    name=data.customer_name or "Walk-in",
+                    phone=data.customer_phone
+                )
+                db.add(customer)
+                db.commit()
+                db.refresh(customer)
+            data.customer_id = customer.id
+
         subtotal = 0.0
         tax_total = 0.0
         sale_items = []

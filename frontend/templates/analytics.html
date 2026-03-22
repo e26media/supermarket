@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Analytics — Salethur Supermarket{% endblock %}
+{% block page_title %}📊 Analytics{% endblock %}
+
+{% block content %}
+<div>
+  <!-- ── KPI Cards ─────────────────────────────────────────── -->
+  <div class="kpi-grid" id="kpi-cards"
+       hx-get="/analytics/summary"
+       hx-trigger="load"
+       hx-swap="innerHTML">
+    {% for i in range(4) %}
+    <div class="kpi-card">
+      <div class="kpi-label">Loading…</div>
+      <div class="kpi-value"><span class="spinner"></span></div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ── Range selector ─────────────────────────────────────── -->
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-header">
+      <div class="card-title">📈 Sales Overview</div>
+      <div style="display:flex; gap:6px;">
+        {% for r, label in [('week','This Week'),('month','This Month'),('year','This Year')] %}
+        <button class="filter-tab range-btn {% if loop.first %}active{% endif %}"
+                onclick="setRange(this,'{{ r }}')"
+                hx-get="/analytics/sales?range={{ r }}"
+                hx-target="#sales-chart-area"
+                hx-swap="innerHTML">{{ label }}</button>
+        {% endfor %}
+      </div>
+    </div>
+    <div id="sales-chart-area"
+         hx-get="/analytics/sales?range=week"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+      <div style="height:260px; display:flex; align-items:center; justify-content:center; color:var(--text-muted);">
+        <span class="spinner" style="margin-right:8px;"></span> Loading chart…
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Bottom Grid: Top & Least Selling + Peak Hours ──────── -->
+  <div class="analytics-grid">
+    <div>
+      <!-- Top Selling -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header">
+          <div class="card-title">🏆 Top Selling Products</div>
+        </div>
+        <div id="top-products"
+             hx-get="/analytics/top-products"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+          <div style="color:var(--text-muted); padding:12px;"><span class="spinner"></span> Loading…</div>
+        </div>
+      </div>
+
+      <!-- Least Selling -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📉 Least Selling Products</div>
+        </div>
+        <div id="least-products"
+             hx-get="/analytics/least-products"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+          <div style="color:var(--text-muted); padding:12px;"><span class="spinner"></span> Loading…</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <!-- Average Order Value -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header">
+          <div class="card-title">💰 Average Order Value</div>
+          <div style="display:flex; gap:6px;">
+            {% for r, label in [('today','Today'),('week','Week'),('month','Month'),('year','Year')] %}
+            <button class="filter-tab {% if loop.first %}active{% endif %}"
+                    onclick="this.parentElement.querySelectorAll('.filter-tab').forEach(b=>b.classList.remove('active')); this.classList.add('active');"
+                    hx-get="/analytics/avg-order?range={{ r }}"
+                    hx-target="#avg-order"
+                    hx-swap="innerHTML">{{ label }}</button>
+            {% endfor %}
+          </div>
+        </div>
+        <div id="avg-order"
+             hx-get="/analytics/avg-order?range=today"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+          <div style="color:var(--text-muted); padding:12px;"><span class="spinner"></span> Loading…</div>
+        </div>
+      </div>
+
+      <!-- Peak Hours -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">⏰ Peak Sales Hours</div>
+        </div>
+        <div id="peak-hours"
+             hx-get="/analytics/peak-hours"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+          <div style="color:var(--text-muted); padding:12px;"><span class="spinner"></span> Loading…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

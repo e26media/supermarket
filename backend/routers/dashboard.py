@@ -16,10 +16,11 @@ router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 @router.get("/summary")
 def daily_summary(
     target_date: Optional[date] = Query(None, description="ISO date e.g. 2024-12-25"),
+    period: Optional[str] = Query(None, description="Date range: today, week, month, year"),
     db: Session = Depends(get_db),
     _: User = Depends(require_admin),
 ):
-    return DashboardService.daily_summary(db, target_date)
+    return DashboardService.daily_summary(db, target_date=target_date, period=period)
 
 
 @router.get("/top-products")

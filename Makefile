@@ -8,4 +8,4 @@ backend:
 	uvicorn backend.main:app --reload --port 8000
 
 frontend:
-	streamlit run frontend/app.py
+	uvicorn frontend.routes:app --reload --port 8001

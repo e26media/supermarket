@@ -1,0 +1,86 @@
+<!-- Modal Step 2: Payment Method -->
+<div class="modal-backdrop" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title">💳 Select Payment Method</div>
+    <div class="modal-step-indicator">
+      <div class="modal-step-dot active"></div>
+      <div class="modal-step-dot active"></div>
+      <div class="modal-step-dot"></div>
+      <div class="modal-step-dot"></div>
+    </div>
+    <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:16px;">Step 2 of 4 — Payment</div>
+
+    <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:14px;">
+      Customer: <strong style="color:var(--text)">{{ cust_name or 'Walk-in' }}</strong>
+    </div>
+
+    <!-- Payment method picker -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;" id="pay-methods">
+      {% for method, label, icon in [
+          ('cash',   'Cash',       '💵'),
+          ('upi',    'UPI',        '📱'),
+          ('card',   'Card (Pine Labs)', '💳'),
+          ('credit', 'Credit',     '🤝'),
+      ] %}
+      <label style="display:flex; align-items:center; gap:8px; padding:12px;
+                    background:rgba(255,255,255,0.04); border:1px solid var(--border);
+                    border-radius:var(--radius-sm); cursor:pointer;
+                    transition:all 0.15s ease;"
+             onclick="selectPayMethod(this, '{{ method }}')">
+        <input type="radio" name="payment_mode" value="{{ method }}"
+               style="accent-color:var(--accent);" {% if loop.first %}checked{% endif %}>
+        <span style="font-size:1.1rem;">{{ icon }}</span>
+        <span style="font-size:0.83rem; font-weight:500;">{{ label }}</span>
+      </label>
+      {% endfor %}
+    </div>
+
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-secondary"
+              hx-get="/pos/modal/customer"
+              hx-target="#modal-container"
+              hx-swap="innerHTML">← Back</button>
+      <button id="pay-confirm-btn" class="btn btn-primary" style="flex:1"
+              onclick="submitPayment(this, '{{ cust_name }}', '{{ cust_phone }}', {{ grand_total }})">
+        ✅ Confirm &amp; Pay ₹{{ grand_total | int }}
+      </button>
+    </div>
+  </div>
+</div>
+<script>
+function selectPayMethod(label, val) {
+  document.querySelectorAll('#pay-methods label').forEach(l => {
+    l.style.borderColor = 'var(--border)';
+    l.style.background = 'rgba(255,255,255,0.04)';
+  });
+  label.style.borderColor = 'var(--accent)';
+  label.style.background = 'rgba(233,69,96,0.1)';
+}
+// Mark first one selected on load
+document.addEventListener('DOMContentLoaded', () => {
+  const first = document.querySelector('#pay-methods label');
+  if (first) selectPayMethod(first, 'cash');
+});
+
+function submitPayment(btn, custName, custPhone, grandTotal) {
+  const mode = document.querySelector('input[name=payment_mode]:checked')?.value || 'cash';
+  btn.textContent = 'Processing…';
+  btn.disabled = true;
+  
+  const token = localStorage.getItem('auth_token');
+  const headers = {};
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+
+  htmx.ajax('POST', '/pos/modal/verify', {
+    target: '#modal-container',
+    swap: 'innerHTML',
+    headers: headers,
+    values: {
+      payment_mode: mode,
+      cust_name: custName,
+      cust_phone: custPhone,
+      grand_total: grandTotal
+    }
+  });
+}
+</script>

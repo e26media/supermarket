@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Settings — Salethur Supermarket{% endblock %}
+{% block page_title %}⚙️ Settings{% endblock %}
+
+{% block content %}
+<div class="settings-grid">
+
+  <!-- ── Appearance ─────────────────────────────── -->
+  <div class="card">
+    <div class="card-title" style="margin-bottom:14px;">🎨 Appearance</div>
+
+    <div class="setting-item">
+      <div>
+        <div class="setting-label">Dark / Light Mode</div>
+        <div class="setting-desc">Toggle between dark and light theme</div>
+      </div>
+      <div class="toggle" id="theme-toggle" onclick="toggleTheme()"></div>
+    </div>
+
+    <div class="setting-item">
+      <div>
+        <div class="setting-label">Sidebar Collapsed</div>
+        <div class="setting-desc">Collapse sidebar to icon-only view</div>
+      </div>
+      <div class="toggle" id="sidebar-toggle" onclick="toggleSidebar()"></div>
+    </div>
+  </div>
+
+  <!-- ── System ─────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title" style="margin-bottom:14px;">🖥️ System</div>
+
+    <div class="setting-item">
+      <div>
+        <div class="setting-label">Backend URL</div>
+        <div class="setting-desc">API server address</div>
+      </div>
+      <code style="font-size:0.75rem; color:var(--text-muted); background:rgba(255,255,255,0.05);
+                   padding:3px 8px; border-radius:4px; max-width:160px; overflow:hidden;
+                   text-overflow:ellipsis; white-space:nowrap;" title="{{ api_base }}">
+        {{ api_base }}
+      </code>
+    </div>
+
+    <div class="setting-item">
+      <div>
+        <div class="setting-label">API Health Check</div>
+        <div class="setting-desc">Ping the backend server</div>
+      </div>
+      <button class="btn btn-secondary btn-sm"
+              hx-get="/settings/health"
+              hx-target="#health-result"
+              hx-swap="innerHTML">
+        🔍 Check
+      </button>
+    </div>
+    <div id="health-result" style="font-size:0.78rem; color:var(--text-muted); padding-top:6px;"></div>
+  </div>
+
+  <!-- ── Printer ────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title" style="margin-bottom:14px;">🖨️ Receipt Printer</div>
+
+    <div class="setting-item">
+      <div>
+        <div class="setting-label">Test Print</div>
+        <div class="setting-desc">Print a test receipt to verify connection</div>
+      </div>
+      <button class="btn btn-secondary btn-sm"
+              hx-post="/settings/test-print"
+              hx-target="#print-result"
+              hx-swap="innerHTML">
+        🖨️ Test
+      </button>
+    </div>
+    <div id="print-result" style="font-size:0.78rem; color:var(--text-muted); padding-top:6px;"></div>
+  </div>
+
+  <!-- ── Scale ──────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title" style="margin-bottom:14px;">⚖️ Digital Scale</div>
+
+    <div class="setting-item">
+      <div>
+        <div class="setting-label">Read Scale</div>
+        <div class="setting-desc">Test weight reading from the scale</div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="readScale()">
+        📡 Read
+      </button>
+    </div>
+  </div>
+
+  <!-- ── About ──────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title" style="margin-bottom:14px;">ℹ️ About</div>
+    <div style="font-size:0.82rem; color:var(--text-muted); line-height:2;">
+      <div>App: <strong style="color:var(--text)">Salethur Supermarket POS</strong></div>
+      <div>Version: <strong style="color:var(--text)">2.0.0 (HTMX)</strong></div>
+      <div>Stack: <strong style="color:var(--text)">FastAPI + HTMX + Jinja2</strong></div>
+      <div>Built by: <strong style="color:var(--text)">E26 Media</strong></div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const toggle = document.getElementById('sidebar-toggle');
+  sidebar.style.width = sidebar.style.width === '60px' ? 'var(--sidebar-w)' : '60px';
+  toggle.classList.toggle('on');
+}
+
+// Set initial theme toggle state
+document.addEventListener('DOMContentLoaded', function () {
+  const tok = document.getElementById('theme-toggle');
+  if (document.documentElement.classList.contains('light')) {
+    tok.classList.add('on');
+  }
+});
+</script>
+{% endblock %}

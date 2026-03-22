@@ -6,7 +6,7 @@ def main():
     print("🚀 Starting Supermarket System...")
 
     # Start FastAPI Backend
-    print("📦 Starting FastAPI Backend...")
+    print("📦 Starting FastAPI Backend on http://localhost:8000 ...")
     backend = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "backend.main:app", "--reload", "--port", "8000"]
     )
@@ -14,19 +14,18 @@ def main():
     # Wait a moment for the backend to initialize
     time.sleep(2)
     
-    # Start Streamlit Frontend
-    print("🎨 Starting Streamlit Frontend...")
+    # Start HTMX Frontend
+    print("🎨 Starting HTMX Frontend on http://localhost:8001 ...")
     frontend = subprocess.Popen(
-        [sys.executable, "-m", "streamlit", "run", "frontend/app.py"]
+        [sys.executable, "-m", "uvicorn", "frontend.routes:app", "--reload", "--port", "8001"]
     )
     
     print("\n✅ Both services are running!")
-    print("Backend API: http://localhost:8000")
-    print("Frontend UI: http://localhost:8501")
+    print("Backend API : http://localhost:8000")
+    print("Frontend UI : http://localhost:8001")
     print("Press Ctrl+C to stop both services.\n")
     
     try:
-        # Keep the script running to maintain the subprocesses
         backend.wait()
         frontend.wait()
     except KeyboardInterrupt:

@@ -1,0 +1,43 @@
+<!-- Modal Step 1: Customer Details -->
+<div class="modal-backdrop" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title">💳 Complete Purchase</div>
+    <div class="modal-step-indicator">
+      <div class="modal-step-dot active"></div>
+      <div class="modal-step-dot"></div>
+      <div class="modal-step-dot"></div>
+      <div class="modal-step-dot"></div>
+    </div>
+    <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:16px;">Step 1 of 4 — Customer Details</div>
+
+    <div class="form-group">
+      <label class="form-label">Customer Name (optional)</label>
+      <input id="cust-name" type="text" class="form-control" placeholder="Walk-in customer" autocomplete="name">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone Number (optional)</label>
+      <input id="cust-phone" type="tel" class="form-control" placeholder="+91 …" autocomplete="tel">
+    </div>
+
+    <div style="display:flex; gap:8px; margin-top:20px;">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" style="flex:1"
+              hx-post="/pos/modal/payment"
+              hx-target="#modal-container"
+              hx-swap="innerHTML"
+              hx-include="#cust-name, #cust-phone"
+              hx-vals='{"cust_name": "", "cust_phone": ""}'
+              onclick="this.closest('form') || injectCustVals(this)">
+        Next → Payment Method
+      </button>
+    </div>
+  </div>
+</div>
+<script>
+function injectCustVals(btn) {
+  const name = document.getElementById('cust-name').value;
+  const phone = document.getElementById('cust-phone').value;
+  btn.setAttribute('hx-vals', JSON.stringify({cust_name: name, cust_phone: phone}));
+  htmx.process(btn);
+}
+</script>

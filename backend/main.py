@@ -31,6 +31,7 @@ from backend.routers.sales import router as sales_router
 from backend.routers.inventory import router as inventory_router
 from backend.routers.dashboard import router as dashboard_router
 from backend.routers.hardware import router as hardware_router
+from backend.routers.customers import router as customers_router
 
 # ── Create FastAPI app ─────────────────────────────────────────────────────────
 app = FastAPI(
@@ -55,6 +56,7 @@ app.include_router(sales_router)
 app.include_router(inventory_router)
 app.include_router(dashboard_router)
 app.include_router(hardware_router)
+app.include_router(customers_router)
 
 
 # ── Startup event ──────────────────────────────────────────────────────────────

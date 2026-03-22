@@ -1,0 +1,37 @@
+{% if low_stock %}
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Product</th>
+      <th>Category</th>
+      <th>Stock</th>
+      <th>Min Alert</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in low_stock %}
+    <tr>
+      <td><strong>{{ p.name }}</strong></td>
+      <td>{{ p.category or '—' }}</td>
+      <td class="{% if p.stock_qty <= 0 %}low-stock{% endif %}">
+        {{ p.stock_qty if p.unit in ['kg','litre','ltr'] else p.stock_qty | int }} {{ p.unit }}
+      </td>
+      <td>{{ p.min_stock_alert if p.unit in ['kg','litre','ltr'] else p.min_stock_alert | int }}</td>
+      <td>
+        {% if p.stock_qty <= 0 %}
+          <span class="badge badge-danger">Out of Stock</span>
+        {% else %}
+          <span class="badge badge-warning">Low Stock</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div style="text-align:center; padding:32px; color:var(--text-muted);">
+  <div style="font-size:2.5rem; margin-bottom:10px;">✅</div>
+  All products have adequate stock levels.
+</div>
+{% endif %}

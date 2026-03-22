@@ -12,6 +12,8 @@ class SaleItemIn(BaseModel):
 
 class SaleCreate(BaseModel):
     customer_id: Optional[int] = None
+    customer_name: Optional[str] = None
+    customer_phone: Optional[str] = None
     items: List[SaleItemIn]
     discount: float = 0.0         # overall cart discount %
     payment_mode: str = "cash"    # cash | upi | card | credit
@@ -35,6 +37,7 @@ class SaleItemResponse(BaseModel):
 class SaleResponse(BaseModel):
     id: int
     customer_id: Optional[int]
+    customer_name: Optional[str] = None
     user_id: int
     subtotal: float
     discount: float
