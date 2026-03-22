@@ -143,37 +143,37 @@ async def root():
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", _ctx(request))
+    return templates.TemplateResponse(request=request, name="login.html", context=_ctx(request))
 
 
 @app.get("/app/pos", response_class=HTMLResponse)
 async def pos_page(request: Request):
-    return templates.TemplateResponse("pos.html", _ctx(request))
+    return templates.TemplateResponse(request=request, name="pos.html", context=_ctx(request))
 
 
 @app.get("/app/analytics", response_class=HTMLResponse)
 async def analytics_page(request: Request):
-    return templates.TemplateResponse("analytics.html", _ctx(request))
+    return templates.TemplateResponse(request=request, name="analytics.html", context=_ctx(request))
 
 
 @app.get("/app/inventory", response_class=HTMLResponse)
 async def inventory_page(request: Request):
-    return templates.TemplateResponse("inventory.html", _ctx(request))
+    return templates.TemplateResponse(request=request, name="inventory.html", context=_ctx(request))
 
 
 @app.get("/app/customers", response_class=HTMLResponse)
 async def customers_page(request: Request):
-    return templates.TemplateResponse("customers.html", _ctx(request))
+    return templates.TemplateResponse(request=request, name="customers.html", context=_ctx(request))
 
 
 @app.get("/app/help", response_class=HTMLResponse)
 async def help_page(request: Request):
-    return templates.TemplateResponse("help.html", _ctx(request))
+    return templates.TemplateResponse(request=request, name="help.html", context=_ctx(request))
 
 
 @app.get("/app/settings", response_class=HTMLResponse)
 async def settings_page(request: Request):
-    return templates.TemplateResponse("settings.html", _ctx(request))
+    return templates.TemplateResponse(request=request, name="settings.html", context=_ctx(request))
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -192,9 +192,7 @@ async def pos_products(request: Request, status: str = "all"):
         products = [p for p in products if 0 < p.get("stock_qty", 0) <= p.get("min_stock_alert", 0)]
     elif status == "out_of_stock":
         products = [p for p in products if p.get("stock_qty", 0) <= 0]
-    return templates.TemplateResponse(
-        "partials/product_list.html",
-        _ctx(request, products=products)
+    return templates.TemplateResponse(request=request, name="partials/product_list.html", context=_ctx(request, products=products)
     )
 
 
@@ -206,9 +204,7 @@ async def pos_search(request: Request, q: str = ""):
     else:
         resp = await _api("get", f"/products/search?q={q}", token=token)
     products = resp["data"] or []
-    return templates.TemplateResponse(
-        "partials/product_list.html",
-        _ctx(request, products=products)
+    return templates.TemplateResponse(request=request, name="partials/product_list.html", context=_ctx(request, products=products)
     )
 
 
@@ -226,9 +222,7 @@ async def recent_bills(request: Request):
             "total": s.get("total", 0),
             "payment_mode": s.get("payment_mode", "cash"),
         })
-    return templates.TemplateResponse(
-        "partials/recent_bills.html",
-        _ctx(request, bills=bills)
+    return templates.TemplateResponse(request=request, name="partials/recent_bills.html", context=_ctx(request, bills=bills)
     )
 
 
@@ -238,9 +232,7 @@ async def get_cart(request: Request):
     sid = _session_id(request)
     cart = _get_cart(sid)
     _recalc(cart)
-    return templates.TemplateResponse(
-        "partials/cart.html",
-        _ctx(request, cart=cart["items"], cart_discount=cart["cart_discount"])
+    return templates.TemplateResponse(request=request, name="partials/cart.html", context=_ctx(request, cart=cart["items"], cart_discount=cart["cart_discount"])
     )
 
 
@@ -262,9 +254,7 @@ async def add_to_cart(request: Request, product_id: int):
         if item["product_id"] == product_id:
             item["qty"] += 0.5 if is_float else 1
             _recalc(cart)
-            return templates.TemplateResponse(
-                "partials/cart.html",
-                _ctx(request, cart=cart["items"], cart_discount=cart["cart_discount"])
+            return templates.TemplateResponse(request=request, name="partials/cart.html", context=_ctx(request, cart=cart["items"], cart_discount=cart["cart_discount"])
             )
 
     cart["items"].append({
@@ -278,9 +268,7 @@ async def add_to_cart(request: Request, product_id: int):
         "subtotal": product["price"],
     })
     _recalc(cart)
-    return templates.TemplateResponse(
-        "partials/cart.html",
-        _ctx(request, cart=cart["items"], cart_discount=cart["cart_discount"])
+    return templates.TemplateResponse(request=request, name="partials/cart.html", context=_ctx(request, cart=cart["items"], cart_discount=cart["cart_discount"])
     )
 
 
@@ -297,9 +285,7 @@ async def change_qty(request: Request, product_id: int,
                 cart["items"].remove(item)
             break
     _recalc(cart)
-    return templates.TemplateResponse(
-        "partials/cart.html",
-        _ctx(request, cart=cart["items"], cart_discount=cart["cart_discount"])
+    return templates.TemplateResponse(request=request, name="partials/cart.html", context=_ctx(request, cart=cart["items"], cart_discount=cart["cart_discount"])
     )
 
 
@@ -314,9 +300,7 @@ async def set_item_discount(request: Request,
             item["discount"] = max(0, min(100, discount))
             break
     _recalc(cart)
-    return templates.TemplateResponse(
-        "partials/cart.html",
-        _ctx(request, cart=cart["items"], cart_discount=cart["cart_discount"])
+    return templates.TemplateResponse(request=request, name="partials/cart.html", context=_ctx(request, cart=cart["items"], cart_discount=cart["cart_discount"])
     )
 
 
@@ -327,9 +311,7 @@ async def set_cart_discount(request: Request,
     cart = _get_cart(sid)
     cart["cart_discount"] = max(0, min(100, discount))
     _recalc(cart)
-    return templates.TemplateResponse(
-        "partials/cart.html",
-        _ctx(request, cart=cart["items"], cart_discount=cart["cart_discount"])
+    return templates.TemplateResponse(request=request, name="partials/cart.html", context=_ctx(request, cart=cart["items"], cart_discount=cart["cart_discount"])
     )
 
 
@@ -340,9 +322,7 @@ async def remove_cart_item(request: Request,
     cart = _get_cart(sid)
     cart["items"] = [i for i in cart["items"] if i["product_id"] != product_id]
     _recalc(cart)
-    return templates.TemplateResponse(
-        "partials/cart.html",
-        _ctx(request, cart=cart["items"], cart_discount=cart["cart_discount"])
+    return templates.TemplateResponse(request=request, name="partials/cart.html", context=_ctx(request, cart=cart["items"], cart_discount=cart["cart_discount"])
     )
 
 
@@ -350,16 +330,14 @@ async def remove_cart_item(request: Request,
 async def clear_cart(request: Request):
     sid = _session_id(request)
     CARTS.pop(sid, None)
-    return templates.TemplateResponse(
-        "partials/cart.html",
-        _ctx(request, cart=[], cart_discount=0.0)
+    return templates.TemplateResponse(request=request, name="partials/cart.html", context=_ctx(request, cart=[], cart_discount=0.0)
     )
 
 
 # ── Payment modal flow ────────────────────────────────────────────────────
 @app.get("/pos/modal/customer", response_class=HTMLResponse)
 async def modal_customer(request: Request):
-    return templates.TemplateResponse("partials/bill_modal.html", _ctx(request))
+    return templates.TemplateResponse(request=request, name="partials/bill_modal.html", context=_ctx(request))
 
 
 @app.post("/pos/modal/payment", response_class=HTMLResponse)
@@ -374,9 +352,7 @@ async def modal_payment(request: Request,
     subtotal = sum(i["subtotal"] for i in cart["items"])
     disc = subtotal * (cart.get("cart_discount", 0) / 100)
     grand_total = subtotal - disc
-    return templates.TemplateResponse(
-        "partials/payment.html",
-        _ctx(request, cust_name=cust_name, cust_phone=cust_phone, grand_total=grand_total)
+    return templates.TemplateResponse(request=request, name="partials/payment.html", context=_ctx(request, cust_name=cust_name, cust_phone=cust_phone, grand_total=grand_total)
     )
 
 
@@ -453,9 +429,7 @@ async def modal_verify(request: Request,
     CARTS.pop(sid, None)
 
     created_at = sale.get("created_at", "")[:16].replace("T", " ")
-    return templates.TemplateResponse(
-        "partials/receipt.html",
-        _ctx(request,
+    return templates.TemplateResponse(request=request, name="partials/receipt.html", context=_ctx(request,
              sale_id=sale["id"],
              customer_name=cust_name or None,
              payment_mode=payment_mode,
@@ -934,9 +908,7 @@ async def inv_stock_alerts(request: Request):
     token = _token(request)
     resp = await _api("get", "/products/low-stock", token=token)
     low = resp["data"] or []
-    return templates.TemplateResponse(
-        "partials/stock_alerts.html",
-        _ctx(request, low_stock=low)
+    return templates.TemplateResponse(request=request, name="partials/stock_alerts.html", context=_ctx(request, low_stock=low)
     )
 
 
