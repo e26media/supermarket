@@ -65,7 +65,7 @@ async function handleLogin(e) {
   const form = e.target;
   const btn = form.querySelector('.btn-primary');
   const errDiv = document.getElementById('login-error');
-  
+
   btn.disabled = true;
   btn.textContent = 'Signing in…';
 
@@ -162,22 +162,22 @@ document.addEventListener('keypress', function (e) {
 function processBarcode(code) {
   const input = document.getElementById('barcode-field');
   if (input) input.value = code;
-  
+
   const token = getAuthToken();
   const API = window.API_BASE || 'http://localhost:8000';
-  
+
   fetch(API + '/products/barcode/' + encodeURIComponent(code), {
     headers: { 'Authorization': 'Bearer ' + token }
   })
-  .then(r => r.json())
-  .then(product => {
-    if (product && product.id) {
-      addToCart(product.id);
-    } else {
-      showToast('Product not found: ' + code, 'error');
-    }
-  })
-  .catch(() => showToast('Barcode lookup failed', 'error'));
+    .then(r => r.json())
+    .then(product => {
+      if (product && product.id) {
+        addToCart(product.id);
+      } else {
+        showToast('Product not found: ' + code, 'error');
+      }
+    })
+    .catch(() => showToast('Barcode lookup failed', 'error'));
 }
 
 /* ── Cart operations ────────────────────────────────── */
@@ -264,18 +264,18 @@ function setRange(el, range) {
 function readScale() {
   const token = getAuthToken();
   const API = window.API_BASE || 'http://localhost:8000';
-  
+
   fetch(API + '/hardware/scale', {
     headers: { 'Authorization': 'Bearer ' + token }
   })
-  .then(r => r.json())
-  .then(data => {
-    if (data.weight) {
-      showToast('⚖️ Weight: ' + data.weight + ' ' + (data.unit || 'kg'), 'success');
-      const el = document.getElementById('scale-weight');
-      if (el) el.textContent = data.weight;
-    } else {
-      showToast(data.error || 'Scale not responding', 'error');
-    }
-  });
+    .then(r => r.json())
+    .then(data => {
+      if (data.weight) {
+        showToast('⚖️ Weight: ' + data.weight + ' ' + (data.unit || 'kg'), 'success');
+        const el = document.getElementById('scale-weight');
+        if (el) el.textContent = data.weight;
+      } else {
+        showToast(data.error || 'Scale not responding', 'error');
+      }
+    });
 }

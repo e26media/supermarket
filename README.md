@@ -1,6 +1,6 @@
 # 🛒 E26 Supermarket POS + CRM System
 
-A full-stack **Point-of-Sale and CRM system** built with **FastAPI**, **Streamlit**, and **PostgreSQL**, with hardware integrations for barcode scanner, digital scale, thermal printer, and Pine Labs POS machine.
+A modern, high-performance **Point-of-Sale and CRM system** built with **FastAPI**, **HTMX**, **Jinja2**, and **PostgreSQL**. Features a sleek, responsive UI with real-time hardware integrations.
 
 ---
 
@@ -9,46 +9,38 @@ A full-stack **Point-of-Sale and CRM system** built with **FastAPI**, **Streamli
 ```
 Supermarket/
 ├── .env                        ← Your environment variables
-├── .env.example                ← Template
 ├── requirements.txt
+├── run.py                      ← Unified runner for Backend & Frontend
 │
 ├── backend/
-│   ├── main.py                 ← FastAPI entry point
-│   ├── database.py             ← SQLAlchemy engine + session
-│   │
-│   ├── models/                 ← ORM models (7 tables)
-│   │   ├── user.py, product.py, customer.py
-│   │   ├── sale.py, sale_item.py
-│   │   ├── inventory.py, credit_ledger.py
-│   │
+│   ├── main.py                 ← FastAPI entry point & migrations
+│   ├── database.py             ← SQLAlchemy engine & postgres session
+│   ├── models/                 ← ORM models (Product, Sale, Customer, etc.)
 │   ├── schemas/                ← Pydantic request/response models
-│   │   ├── user.py, product.py, customer.py
-│   │   ├── sale.py, inventory.py
-│   │
-│   ├── services/               ← Business logic layer
-│   │   ├── auth_service.py     ← JWT + bcrypt auth
-│   │   ├── product_service.py
-│   │   ├── sales_service.py    ← Atomic sale creation
-│   │   ├── inventory_service.py
-│   │   └── dashboard_service.py
-│   │
-│   ├── routers/                ← FastAPI endpoint routers
-│   │   ├── auth.py, products.py, sales.py
-│   │   ├── inventory.py, dashboard.py, hardware.py
-│   │
-│   └── hardware/               ← Hardware integration layer
-│       ├── barcode.py          ← Zebra DS2208 (HID keyboard)
-│       ├── scale.py            ← RS-232 serial scale (pyserial)
-│       ├── printer.py          ← Epson ESC/POS (python-escpos)
-│       └── pos_machine.py      ← Pine Labs Plutus Smart HTTP API
+│   ├── services/               ← Business logic (Inventory, Sales, Auth)
+│   └── routers/                ← REST API endpoints
 │
 └── frontend/
-    ├── app.py                  ← Streamlit entry point + navigation
-    ├── login.py                ← Login page
-    ├── pos.py                  ← POS billing interface
-    ├── inventory.py            ← Admin inventory management
-    └── dashboard.py            ← Admin analytics dashboard
+    ├── routes.py               ← HTMX-based page routing (Main Controller)
+    ├── static/
+    │   ├── style.css           ← Modern UI theme & glassmorphism
+    │   └── assets/             ← UI Icons and product images
+    └── templates/
+        ├── base.html           ← Main layout with Navbar
+        ├── pages/              ← Full page templates (Inventory, POS, etc.)
+        └── partials/           ← Dynamic HTMX components (Modals, Rows)
 ```
+
+---
+
+## 🚀 Key Concepts: The "Golden Rule"
+
+Our inventory system follows a unique **Count-Based Inventory** rule to avoid precision errors:
+-   **Stock (qty)**: Always tracked as a count of **Pieces/Packets/Pcs**.
+-   **Unit Size (unit_value)**: The physical size of each piece (e.g., `500` for 500ml milk).
+-   **Smart Display**: The POS automatically calculates and shows total volume/weight.
+    -   *Example*: `50 pcs (25 L total)` for a crate of 50 half-litre milk packets.
+-   **Strict Integers**: All stock quantities and restocks are enforced as integers to maintain a clean ledger.
 
 ---
 
@@ -61,35 +53,19 @@ Supermarket/
 
 ### 2. Install dependencies
 ```powershell
-cd "c:\Users\Lenovo\Documents\Razik\E26\Supermarket"
 pip install -r requirements.txt
 ```
 
 ### 3. Configure environment
-Edit `.env` with your PostgreSQL credentials and hardware settings.
+Create a `.env` file based on the local environment settings (PostgreSQL URL).
 
 ### 4. Run the application
-You can run both the frontend and backend together using one of these methods:
-
-- **Windows Batch Script:** Double-click `run.bat` or run `.\run.bat` in your terminal.
-- **Python Script:** Run `python run.py`. This is the best way to handle stopping both services with `Ctrl+C`.
-- **Makefile:** If you have `make` installed, run `make run`.
-
-Alternatively, you can run them manually in separate terminals:
-
-**Start the backend:**
+The project uses a unified runner. Simply execute:
 ```powershell
-uvicorn backend.main:app --reload --port 8000
+python run.py
 ```
-- API docs: http://localhost:8000/docs
-- Tables are **auto-created** on first run
-- Default admin: `admin` / `admin123` (**change immediately!**)
-
-**Start the frontend:**
-```powershell
-streamlit run frontend/app.py
-```
-- Opens at: http://localhost:8501
+-   **Backend Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+-   **Web Interface**: [http://localhost:8000/](http://localhost:8000/) (FastAPI serves both)
 
 ---
 
@@ -99,39 +75,25 @@ streamlit run frontend/app.py
 |-------|----------|------------|
 | Admin | `admin`  | `admin123` |
 
-> ⚠️ **Change the default password after first login via the API.**
+---
+
+## 🔌 Hardware Integrations
+
+| Device | Type | Logic |
+|--------|------|-------|
+| Barcode Scanner | HID Keyboard | Real-time POS lookup |
+| Digital Scale | RS-232 | `SCALE_COM_PORT` config |
+| Thermal Printer | ESC/POS | Automatic receipt generation |
+| Payment POS | HTTP API | Pine Labs Plutus Smart Integration |
 
 ---
 
-## 🔌 Hardware Setup
-
-| Device | Connection | Config Key |
-|--------|-----------|------------|
-| Zebra DS2208 | USB (HID keyboard) | No config needed |
-| Digital Scale | RS-232 Serial | `SCALE_COM_PORT` |
-| Epson Printer | USB or Network | `PRINTER_TYPE`, `PRINTER_HOST` |
-| Pine Labs Plutus | Local HTTP | `PINE_LABS_HOST`, `PINE_LABS_PORT` |
-
-> Hardware modules gracefully handle missing connections — the system works without hardware in dev mode.
-
----
-
-## 📊 API Endpoints Summary
+## 📊 API Summary
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/auth/login` | Login, get JWT |
-| POST | `/auth/register` | Create user |
-| GET  | `/products/` | List products |
-| GET  | `/products/barcode/{code}` | Barcode lookup |
-| POST | `/products/` | Add product (admin) |
-| PUT  | `/products/{id}` | Edit product (admin) |
-| DELETE | `/products/{id}` | Delete product (admin) |
-| POST | `/sales/` | Create sale |
-| GET  | `/sales/` | List sales |
-| POST | `/inventory/restock` | Restock (admin) |
-| GET  | `/dashboard/summary` | Daily KPIs |
-| GET  | `/dashboard/top-products` | Top sellers |
-| GET  | `/hardware/scale` | Read scale weight |
-| POST | `/hardware/print` | Print receipt |
-| POST | `/hardware/payment/initiate` | Start POS payment |
+| POST | `/auth/token` | Get JWT access token |
+| GET  | `/products/` | List all products |
+| POST | `/inventory/restock` | Update stock counts (Integer-only) |
+| POST | `/sales/` | Process a new sale (Atomic) |
+| GET  | `/dashboard/summary` | Real-time sales KPIs |

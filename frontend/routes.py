@@ -246,13 +246,10 @@ async def add_to_cart(request: Request, product_id: int):
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    unit = product.get("unit", "pcs")
-    is_float = unit.lower() in ["kg", "litre", "ltr"]
-
     # Check if already in cart
     for item in cart["items"]:
         if item["product_id"] == product_id:
-            item["qty"] += 0.5 if is_float else 1
+            item["qty"] += 1
             _recalc(cart)
             return templates.TemplateResponse(request=request, name="partials/cart.html", context=_ctx(request, cart=cart["items"], cart_discount=cart["cart_discount"])
             )
@@ -260,9 +257,9 @@ async def add_to_cart(request: Request, product_id: int):
     cart["items"].append({
         "product_id": product_id,
         "name": product["name"],
-        "unit": unit,
+        "unit": "pcs",
         "unit_price": product["price"],
-        "qty": 0.5 if is_float else 1,
+        "qty": 1,
         "discount": 0.0,
         "image_data": product.get("image_data"),
         "subtotal": product["price"],
@@ -609,25 +606,28 @@ async def inv_products(request: Request):
     rows = ""
     for p in products:
         unit = p.get("unit", "pcs")
-        is_float = unit.lower() in ["kg", "litre", "ltr"]
         qty = p.get("stock_qty", 0)
         min_q = p.get("min_stock_alert", 0)
-        qty_disp = round(float(qty), 2) if is_float else int(qty)
-        low = qty <= min_q
+        qty_disp = int(qty)
+        low = int(qty) <= int(min_q)
         status_badge = (
             '<span class="badge badge-danger">Out</span>' if qty <= 0
             else '<span class="badge badge-warning">Low</span>' if low
             else '<span class="badge badge-success">OK</span>'
         )
+        img_url = f'data:image/jpeg;base64,{p.get("image_data")}' if p.get("image_data") else ""
+        img_tag = f'<img src="{img_url}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">' if img_url else '<div style="width:40px;height:40px;background:rgba(255,255,255,0.05);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;border:1px solid var(--border);">🛒</div>'
+        
         rows += f"""
         <tr>
           <td>{p.get('id')}</td>
+          <td>{img_tag}</td>
           <td><strong>{p.get('name')}</strong></td>
           <td>{p.get('barcode') or '—'}</td>
           <td>{p.get('category') or '—'}</td>
-          <td>{unit}</td>
+          <td>{p.get('unit_value', '')} {p.get('base_unit', '') or p.get('unit', '')}</td>
           <td>₹{int(p.get('price', 0))}</td>
-          <td class="{'low-stock' if low else ''}">{qty_disp}</td>
+          <td class="{'low-stock' if low else ''}">{qty_disp} pcs</td>
           <td>{status_badge}</td>
           <td>
             <button class="btn btn-secondary btn-sm"
@@ -650,8 +650,8 @@ async def inv_products(request: Request):
     <div style="overflow-x:auto;">
     <table class="data-table">
       <thead><tr>
-        <th>ID</th><th>Name</th><th>Barcode</th><th>Category</th>
-        <th>Unit</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th>
+        <th>ID</th><th>Image</th><th>Name</th><th>Barcode</th><th>Category</th>
+        <th>Size</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th>
       </tr></thead>
       <tbody>{rows}</tbody>
     </table>
@@ -683,18 +683,28 @@ async def inv_add_form(request: Request):
           </div>
           <div class="form-group">
             <label class="form-label">Category</label>
-            <input class="form-control" name="category" placeholder="e.g. Grains">
+            <select class="form-control" name="category">
+              <option value="">-- Select Category --</option>
+              <option value="food">food</option>
+              <option value="dairy">dairy</option>
+              <option value="stationaries">stationaries</option>
+              <option value="processed foods">processed foods</option>
+              <option value="utensils">utensils</option>
+              <option value="readymade items">readymade items</option>
+              <option value="house hold items">house hold items</option>
+            </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Unit</label>
-            <select class="form-control" name="unit">
+            <label class="form-label">Base Unit</label>
+            <select class="form-control" name="base_unit">
               <option value="pcs">pcs</option>
-              <option value="kg">kg</option>
-              <option value="litre">litre</option>
-              <option value="pack">pack</option>
-              <option value="dozen">dozen</option>
-              <option value="box">box</option>
+              <option value="g">g</option>
+              <option value="ml">ml</option>
             </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Unit Value</label>
+            <input class="form-control" name="unit_value" type="number" step="any" value="1" required>
           </div>
           <div class="form-group">
             <label class="form-label">Price (₹) *</label>
@@ -705,12 +715,15 @@ async def inv_add_form(request: Request):
             <input class="form-control" name="tax_rate" type="number" min="0" max="100" value="0" step="1">
           </div>
           <div class="form-group">
-            <label class="form-label">Opening Stock</label>
-            <input class="form-control" name="stock_qty" type="number" min="0" step="0.5" value="0">
+            <label class="form-label">Opening Stock (pcs) *</label>
+            <input class="form-control" name="stock_qty" type="number" min="0" step="1" value="0" required
+                   onkeydown="if(event.key==='.' || event.key==='e' || event.key==='-'){{event.preventDefault();}}">
+            <input type="hidden" name="stock_unit" value="pcs">
           </div>
           <div class="form-group">
-            <label class="form-label">Min Stock Alert</label>
-            <input class="form-control" name="min_stock_alert" type="number" min="0" step="0.5" value="5">
+            <label class="form-label">Min Stock Alert (pcs) *</label>
+            <input class="form-control" name="min_stock_alert" type="number" min="0" step="1" value="5" required
+                   onkeydown="if(event.key==='.' || event.key==='e' || event.key==='-'){{event.preventDefault();}}">
           </div>
           <div class="form-group">
             <label class="form-label">Product Image</label>
@@ -736,20 +749,27 @@ async def inv_create_product(request: Request,
                               unit: str = Form("pcs"),
                               price: float = Form(...),
                               tax_rate: float = Form(0),
-                              stock_qty: float = Form(0),
-                              min_stock_alert: float = Form(5),
+                               base_unit: str = Form("pcs"),
+                               unit_value: float = Form(1.0),
+                               stock_unit: str = Form("pcs"),
+                               stock_qty: int = Form(0),
+                              min_stock_alert: int = Form(5),
                               description: Optional[str] = Form(None),
                               image: UploadFile = File(None)):
     token = _token(request)
     image_data = await _to_base64(image)
     payload = {
         "name": name, "barcode": barcode or None, "category": category,
-        "unit": unit, "price": price, "tax_rate": tax_rate,
+        "unit": base_unit, "price": price, "tax_rate": tax_rate,
+        "base_unit": base_unit, "unit_value": unit_value, "stock_unit": stock_unit,
         "stock_qty": stock_qty, "min_stock_alert": min_stock_alert,
         "description": description or None,
         "image_data": image_data,
     }
     resp = await _api("post", "/products/", token=token, json=payload)
+    if resp["error"]:
+        # Return the specific pydantic validation error message
+        return HTMLResponse(f'<div style="color:var(--accent);padding:12px;background:rgba(255,0,0,0.1);border-radius:8px;">❌ {resp["error"]}</div>')
     if resp["data"]:
         return RedirectResponse(url="/inventory/products", status_code=303)
     return HTMLResponse("""<div style="color:var(--accent);padding:12px;">
@@ -772,12 +792,15 @@ async def inv_edit_form(request: Request, product_id: int):
     if not p:
         return HTMLResponse('<div style="color:var(--accent);padding:12px;">❌ Product not found.</div>')
     
-    # Pre-select unit
-    units = ["pcs", "kg", "litre", "pack", "dozen", "box"]
-    unit_options = "".join(f'<option value="{u}" {"selected" if p.get("unit")==u else ""}>{u}</option>' for u in units)
+    # Generate category options
+    cat_list = ["food", "dairy", "stationaries", "processed foods", "utensils", "readymade items", "house hold items"]
+    cat_options = '<option value="">-- Select Category --</option>'
+    for cat in cat_list:
+        selected = 'selected' if p.get('category') == cat else ''
+        cat_options += f'<option value="{cat}" {selected}>{cat}</option>'
 
     return HTMLResponse(f"""
-    <div class="card" style="max-width:600px; margin:20px auto;">
+    <div class="modal" style="margin:20px auto;">
       <div class="card-title" style="margin-bottom:16px;">✏️ Edit Product: {p.get('name')}</div>
       <form hx-post="/inventory/product/{product_id}"
             hx-target="#inv-content"
@@ -794,13 +817,25 @@ async def inv_edit_form(request: Request, product_id: int):
           </div>
           <div class="form-group">
             <label class="form-label">Category</label>
-            <input class="form-control" name="category" value="{p.get('category','') or ''}">
+            <select class="form-control" name="category">
+              {cat_options}
+            </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Unit</label>
-            <select class="form-control" name="unit">
-              {unit_options}
+            <label class="form-label">Stock Unit (e.g. pcs, packets)</label>
+            <input class="form-control" name="stock_unit" value="{p.get('stock_unit','pcs')}" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Base Unit (for inventory tracking)</label>
+            <select class="form-control" name="base_unit">
+              <option value="pcs" {"selected" if p.get("base_unit")=="pcs" else ""}>pcs</option>
+              <option value="g" {"selected" if p.get("base_unit")=="g" else ""}>g</option>
+              <option value="ml" {"selected" if p.get("base_unit")=="ml" else ""}>ml</option>
             </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Unit Value (e.g. 1000 for 1kg=1000g)</label>
+            <input class="form-control" name="unit_value" type="number" step="any" value="{p.get('unit_value', 1.0)}" required>
           </div>
           <div class="form-group">
             <label class="form-label">Price (₹) *</label>
@@ -811,8 +846,9 @@ async def inv_edit_form(request: Request, product_id: int):
             <input class="form-control" name="tax_rate" type="number" min="0" max="100" value="{int(p.get('tax_rate',0))}" step="1">
           </div>
           <div class="form-group">
-            <label class="form-label">Min Stock Alert</label>
-            <input class="form-control" name="min_stock_alert" type="number" min="0" step="0.5" value="{p.get('min_stock_alert',5)}">
+            <label class="form-label">Min Stock Alert (pcs) *</label>
+            <input class="form-control" name="min_stock_alert" type="number" min="0" step="1" value="{int(p.get('min_stock_alert',5))}" required
+                   onkeydown="if(event.key==='.' || event.key==='e' || event.key==='-'){{event.preventDefault();}}">
           </div>
           <div class="form-group">
             <label class="form-label">Update Image</label>
@@ -840,14 +876,19 @@ async def inv_update_product(request: Request,
                               unit: str = Form("pcs"),
                               price: float = Form(...),
                               tax_rate: float = Form(0),
-                              min_stock_alert: float = Form(5),
+                              base_unit: Optional[str] = Form(None),
+                              unit_value: Optional[float] = Form(None),
+                              stock_unit: Optional[str] = Form("pcs"),
+                              min_stock_alert: int = Form(5),
                               description: Optional[str] = Form(None),
                               image: UploadFile = File(None)):
     token = _token(request)
     image_data = await _to_base64(image)
     payload = {
         "name": name, "barcode": barcode or None, "category": category,
-        "unit": unit, "price": price, "tax_rate": tax_rate,
+        "unit": base_unit if base_unit else unit, 
+        "price": price, "tax_rate": tax_rate,
+        "base_unit": base_unit, "unit_value": unit_value, "stock_unit": stock_unit,
         "min_stock_alert": min_stock_alert,
         "description": description or None,
     }
@@ -855,6 +896,8 @@ async def inv_update_product(request: Request,
         payload["image_data"] = image_data
         
     resp = await _api("put", f"/products/{product_id}", token=token, json=payload)
+    if resp["error"]:
+        return HTMLResponse(f'<div style="color:var(--accent);padding:12px;background:rgba(255,0,0,0.1);border-radius:8px;">❌ {resp["error"]}</div>')
     if resp["data"]:
         return RedirectResponse(url="/inventory/products", status_code=303)
     return HTMLResponse('<div style="color:var(--accent);padding:12px;">❌ Failed to update product.</div>')
@@ -880,8 +923,10 @@ async def inv_restock_form(request: Request):
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Quantity to Add</label>
-          <input class="form-control" name="qty" type="number" min="0.1" step="0.5" value="1" required>
+          <label class="form-label">Quantity to Add (pcs) *</label>
+          <input class="form-control" name="qty" type="number" min="1" step="1" value="1" required 
+                 onkeydown="if(event.key==='.' || event.key==='e' || event.key==='-'){{event.preventDefault();}}">
+          <small style="color: #888;">Only whole numbers are allowed.</small>
         </div>
         <div class="form-group">
           <label class="form-label">Reason</label>
@@ -895,11 +940,13 @@ async def inv_restock_form(request: Request):
 @app.post("/inventory/restock", response_class=HTMLResponse)
 async def inv_restock(request: Request,
                       product_id: int = Form(...),
-                      qty: float = Form(...),
+                      qty: int = Form(...),
                       reason: str = Form("Restock")):
     token = _token(request)
-    await _api("post", "/inventory/restock", token=token,
+    res = await _api("post", "/inventory/restock", token=token,
                json={"product_id": product_id, "qty": qty, "reason": reason})
+    if res["error"]:
+        return HTMLResponse(f'<div style="color:var(--accent);padding:12px;background:rgba(255,0,0,0.1);border-radius:8px;">❌ {res["error"]}</div>')
     return RedirectResponse(url="/inventory/products", status_code=303)
 
 

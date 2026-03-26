@@ -9,14 +9,36 @@
       {% endif %}
     </div>
     <div class="prod-name" title="{{ p.name }}">{{ p.name }}</div>
+    <div class="prod-measure">
+      {% if p.base_unit == 'ml' and p.unit_value >= 1000 %}
+        {{ (p.unit_value / 1000) | round(1) }} litre
+      {% elif p.base_unit == 'g' and p.unit_value >= 1000 %}
+        {{ (p.unit_value / 1000) | round(1) }} kg
+      {% elif p.base_unit %}
+        {{ p.unit_value | int if p.unit_value == p.unit_value | int else p.unit_value }} {{ p.base_unit }}
+      {% else %}
+        {{ p.unit_measure if p.unit_measure else '&nbsp;' | safe }}
+      {% endif %}
+    </div>
     <div class="prod-price">₹{{ p.price | int }}</div>
     <div class="prod-stock">
+      {% set stock_u = p.stock_unit if p.stock_unit else 'pcs' %}
       {% if p.stock_qty <= 0 %}
         <span style="color:var(--accent)">Out of stock</span>
-      {% elif p.stock_qty <= p.min_stock_alert %}
-        <span style="color:#f39c12">Low: {{ p.stock_qty }} {{ p.unit }}</span>
       {% else %}
-        {{ p.stock_qty if p.unit in ['kg','litre','ltr'] else p.stock_qty | int }} {{ p.unit }}
+        <div {% if p.stock_qty <= p.min_stock_alert %}style="color:#f39c12"{% endif %}>
+          Stock: {{ p.stock_qty | int }} {{ stock_u }}
+        </div>
+        {% if p.base_unit in ['g', 'ml'] %}
+          {% set total_val = p.stock_qty * (p.unit_value if p.unit_value else 1) %}
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
+            {% if p.base_unit == 'ml' %}
+              ({{ (total_val/1000) | round(2) if total_val >= 1000 else total_val | int }} {{ 'L' if total_val >= 1000 else 'ml' }} total)
+            {% elif p.base_unit == 'g' %}
+              ({{ (total_val/1000) | round(2) if total_val >= 1000 else total_val | int }} {{ 'kg' if total_val >= 1000 else 'g' }} total)
+            {% endif %}
+          </div>
+        {% endif %}
       {% endif %}
     </div>
     {% if p.stock_qty > 0 %}

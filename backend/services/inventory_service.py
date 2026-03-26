@@ -36,7 +36,7 @@ class InventoryService:
         return log
 
     @staticmethod
-    def adjust_stock(db: Session, product_id: int, qty_change: float,
+    def adjust_stock(db: Session, product_id: int, qty_change: int,
                      reason: str, user_id: int) -> InventoryLog:
         """Manual positive or negative stock adjustment."""
         product = db.query(Product).filter(Product.id == product_id).first()

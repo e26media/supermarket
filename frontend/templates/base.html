@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Salethur Supermarket{% endblock %}</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
   <link rel="stylesheet" href="/static/style.css?v=2">
   <script src="/static/htmx.min.js"></script>
   <script>
@@ -12,103 +14,106 @@
     window.API_BASE = "{{ api_base }}";
   </script>
 </head>
+
 <body>
-<div class="app-shell">
+  <div class="app-shell">
 
-  <!-- ── Sidebar ─────────────────────────────────────────── -->
-  <nav class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-      <div class="brand-icon">🛒</div>
-      <div class="brand-name">Salethur Supermarket</div>
-      <div class="brand-sub">POS + CRM System</div>
+    <!-- ── Sidebar ─────────────────────────────────────────── -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">🛒</div>
+        <div class="brand-name">Salethur Supermarket</div>
+        <div class="brand-sub">POS + CRM System</div>
+      </div>
+
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-avatar">U</div>
+        <div>
+          <div class="user-name" id="sidebar-username">…</div>
+        </div>
+        <div class="user-role" id="sidebar-role">staff</div>
+      </div>
+
+      <div class="nav-label">Main Menu</div>
+
+      <a class="nav-item" data-page="pos" href="/app/pos" hx-get="/app/pos" hx-target=".main-area"
+        hx-select=".main-area" hx-push-url="true">
+        <span class="nav-icon">🛒</span>
+        <span>Billing</span>
+      </a>
+
+      <a class="nav-item" data-page="analytics" data-role-required="admin" href="/app/analytics" hx-get="/app/analytics"
+        hx-target=".main-area" hx-select=".main-area" hx-push-url="true">
+        <span class="nav-icon">📊</span>
+        <span>Analytics</span>
+      </a>
+
+      <a class="nav-item" data-page="inventory" data-role-required="admin" href="/app/inventory" hx-get="/app/inventory"
+        hx-target=".main-area" hx-select=".main-area" hx-push-url="true">
+        <span class="nav-icon">📦</span>
+        <span>Inventory</span>
+      </a>
+
+      <a class="nav-item" data-page="customers" data-role-required="admin" href="/app/customers" hx-get="/app/customers"
+        hx-target=".main-area" hx-select=".main-area" hx-push-url="true">
+        <span class="nav-icon">👥</span>
+        <span>Customers</span>
+      </a>
+
+      <div class="nav-label">Support</div>
+
+      <a class="nav-item" data-page="help" href="/app/help" hx-get="/app/help" hx-target=".main-area"
+        hx-select=".main-area" hx-push-url="true">
+        <span class="nav-icon">❓</span>
+        <span>Help</span>
+      </a>
+
+      <a class="nav-item" data-page="settings" href="/app/settings" hx-get="/app/settings" hx-target=".main-area"
+        hx-select=".main-area" hx-push-url="true">
+        <span class="nav-icon">⚙️</span>
+        <span>Settings</span>
+      </a>
+
+      <div class="sidebar-footer">
+        <div class="nav-item" onclick="logout()">
+          <span class="nav-icon">🚪</span>
+          <span>Logout</span>
+        </div>
+        <div style="font-size:0.65rem; color:rgba(255,255,255,0.18); text-align:center; padding-top:8px;">
+          E26 Supermarket POS v2.0
+        </div>
+      </div>
+    </nav>
+
+    <!-- ── Main Area ───────────────────────────────────────── -->
+    <div class="main-area">
+      <!-- Topbar -->
+      <header class="topbar">
+        <div class="page-title">{% block page_title %}Dashboard{% endblock %}</div>
+        {% block topbar_extra %}{% endblock %}
+        <div class="topbar-spacer"></div>
+        <!-- Barcode field (always present in topbar for scan) -->
+        {% block topbar_barcode %}{% endblock %}
+        <div class="topbar-action" onclick="showToast('Notifications coming soon', 'info')" title="Notifications">🔔
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="page-content" id="page-content">
+        {% block content %}{% endblock %}
+      </main>
     </div>
 
-    <div class="sidebar-user">
-      <div class="user-avatar" id="sidebar-avatar">U</div>
-      <div>
-        <div class="user-name" id="sidebar-username">…</div>
-      </div>
-      <div class="user-role" id="sidebar-role">staff</div>
-    </div>
-
-    <div class="nav-label">Main Menu</div>
-    
-    <a class="nav-item" data-page="pos" href="/app/pos"
-       hx-get="/app/pos" hx-target=".main-area" hx-select=".main-area" hx-push-url="true">
-      <span class="nav-icon">🛒</span>
-      <span>Billing</span>
-    </a>
-
-    <a class="nav-item" data-page="analytics" data-role-required="admin" href="/app/analytics"
-       hx-get="/app/analytics" hx-target=".main-area" hx-select=".main-area" hx-push-url="true">
-      <span class="nav-icon">📊</span>
-      <span>Analytics</span>
-    </a>
-
-    <a class="nav-item" data-page="inventory" data-role-required="admin" href="/app/inventory"
-       hx-get="/app/inventory" hx-target=".main-area" hx-select=".main-area" hx-push-url="true">
-      <span class="nav-icon">📦</span>
-      <span>Inventory</span>
-    </a>
-
-    <a class="nav-item" data-page="customers" data-role-required="admin" href="/app/customers"
-       hx-get="/app/customers" hx-target=".main-area" hx-select=".main-area" hx-push-url="true">
-      <span class="nav-icon">👥</span>
-      <span>Customers</span>
-    </a>
-
-    <div class="nav-label">Support</div>
-
-    <a class="nav-item" data-page="help" href="/app/help"
-       hx-get="/app/help" hx-target=".main-area" hx-select=".main-area" hx-push-url="true">
-      <span class="nav-icon">❓</span>
-      <span>Help</span>
-    </a>
-
-    <a class="nav-item" data-page="settings" href="/app/settings"
-       hx-get="/app/settings" hx-target=".main-area" hx-select=".main-area" hx-push-url="true">
-      <span class="nav-icon">⚙️</span>
-      <span>Settings</span>
-    </a>
-
-    <div class="sidebar-footer">
-      <div class="nav-item" onclick="logout()">
-        <span class="nav-icon">🚪</span>
-        <span>Logout</span>
-      </div>
-      <div style="font-size:0.65rem; color:rgba(255,255,255,0.18); text-align:center; padding-top:8px;">
-        E26 Supermarket POS v2.0
-      </div>
-    </div>
-  </nav>
-
-  <!-- ── Main Area ───────────────────────────────────────── -->
-  <div class="main-area">
-    <!-- Topbar -->
-    <header class="topbar">
-      <div class="page-title">{% block page_title %}Dashboard{% endblock %}</div>
-      {% block topbar_extra %}{% endblock %}
-      <div class="topbar-spacer"></div>
-      <!-- Barcode field (always present in topbar for scan) -->
-      {% block topbar_barcode %}{% endblock %}
-      <div class="topbar-action" onclick="showToast('Notifications coming soon', 'info')" title="Notifications">🔔</div>
-    </header>
-
-    <!-- Page Content -->
-    <main class="page-content" id="page-content">
-      {% block content %}{% endblock %}
-    </main>
   </div>
 
-</div>
+  <!-- Modal container -->
+  <div id="modal-container"></div>
 
-<!-- Modal container -->
-<div id="modal-container"></div>
+  <!-- Toast container -->
+  <div id="toast-container"></div>
 
-<!-- Toast container -->
-<div id="toast-container"></div>
-
-<script src="/static/app.js"></script>
-{% block extra_js %}{% endblock %}
+  <script src="/static/app.js"></script>
+  {% block extra_js %}{% endblock %}
 </body>
+
 </html>

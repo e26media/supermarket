@@ -74,7 +74,10 @@ def _run_migrations():
     from sqlalchemy import text
 
     migrations = [
-        #"ALTER TABLE products ADD COLUMN IF NOT EXISTS image_data TEXT;",
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS unit_measure TEXT;",
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS base_unit TEXT;",
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS unit_value FLOAT DEFAULT 1.0;",
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS stock_unit TEXT DEFAULT 'pcs';",
         # Add future migrations below this line ↓
         # "ALTER TABLE products ADD COLUMN IF NOT EXISTS category TEXT;",
         # "ALTER TABLE customers ADD COLUMN IF NOT EXISTS loyalty_points INT DEFAULT 0;",

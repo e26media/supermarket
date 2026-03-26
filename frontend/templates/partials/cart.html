@@ -29,7 +29,7 @@
     <div></div>
     <div>Product</div>
     <div class="cart-col-label" style="text-align:center;">Qty</div>
-    <div class="cart-col-label" style="text-align:center;">Disc%</div>
+    <!-- <div class="cart-col-label" style="text-align:center;">Disc%</div> -->
     <div class="cart-col-label" style="text-align:right;">Total</div>
     <div></div>
   </div>
@@ -76,7 +76,7 @@
       </div>
 
       <!-- Discount -->
-      <div class="cart-disc-wrap">
+      <!-- <div class="cart-disc-wrap">
         <input type="number" value="{{ item.discount|int }}"
                min="0" max="100" placeholder="0"
                class="cart-disc-input"
@@ -84,7 +84,7 @@
                hx-trigger="change"
                hx-target="#cart-section" hx-swap="innerHTML"
                name="discount">
-      </div>
+      </div> -->
 
       <!-- Line total -->
       <div class="cart-line-total">₹{{ line_total|int }}</div>

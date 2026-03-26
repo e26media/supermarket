@@ -47,10 +47,7 @@
         <div class="setting-label">API Health Check</div>
         <div class="setting-desc">Ping the backend server</div>
       </div>
-      <button class="btn btn-secondary btn-sm"
-              hx-get="/settings/health"
-              hx-target="#health-result"
-              hx-swap="innerHTML">
+      <button class="btn btn-secondary btn-sm" hx-get="/settings/health" hx-target="#health-result" hx-swap="innerHTML">
         🔍 Check
       </button>
     </div>
@@ -66,10 +63,8 @@
         <div class="setting-label">Test Print</div>
         <div class="setting-desc">Print a test receipt to verify connection</div>
       </div>
-      <button class="btn btn-secondary btn-sm"
-              hx-post="/settings/test-print"
-              hx-target="#print-result"
-              hx-swap="innerHTML">
+      <button class="btn btn-secondary btn-sm" hx-post="/settings/test-print" hx-target="#print-result"
+        hx-swap="innerHTML">
         🖨️ Test
       </button>
     </div>
@@ -107,19 +102,19 @@
 
 {% block extra_js %}
 <script>
-function toggleSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  const toggle = document.getElementById('sidebar-toggle');
-  sidebar.style.width = sidebar.style.width === '60px' ? 'var(--sidebar-w)' : '60px';
-  toggle.classList.toggle('on');
-}
-
-// Set initial theme toggle state
-document.addEventListener('DOMContentLoaded', function () {
-  const tok = document.getElementById('theme-toggle');
-  if (document.documentElement.classList.contains('light')) {
-    tok.classList.add('on');
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const toggle = document.getElementById('sidebar-toggle');
+    sidebar.style.width = sidebar.style.width === '60px' ? 'var(--sidebar-w)' : '60px';
+    toggle.classList.toggle('on');
   }
-});
+
+  // Set initial theme toggle state
+  document.addEventListener('DOMContentLoaded', function () {
+    const tok = document.getElementById('theme-toggle');
+    if (document.documentElement.classList.contains('light')) {
+      tok.classList.add('on');
+    }
+  });
 </script>
 {% endblock %}
