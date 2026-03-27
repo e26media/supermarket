@@ -1,4 +1,4 @@
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator, FieldValidationInfo
 from typing import Optional, Any
 from datetime import datetime
 
@@ -8,8 +8,9 @@ class InventoryRestockRequest(BaseModel):
     qty: int
     reason: Optional[str] = "Restock"
 
-    @validator('qty', pre=True)
-    def qty_must_be_whole_number(cls, v):
+    @field_validator('qty', mode='before')
+    @classmethod
+    def qty_must_be_whole_number(cls, v, info: FieldValidationInfo):
         if v is None: return v
         try:
             val = float(v)

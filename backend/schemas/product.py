@@ -1,4 +1,4 @@
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator, FieldValidationInfo
 from typing import Optional, Any
 from datetime import datetime
 
@@ -31,9 +31,10 @@ class ProductCreate(BaseModel):
     min_stock_alert: int = 5
     description: Optional[str] = None
 
-    @validator('stock_qty', 'min_stock_alert', pre=True)
-    def validate_ints(cls, v, field):
-        return validate_strict_int(v, field.name.replace('_', ' ').title())
+    @field_validator('stock_qty', 'min_stock_alert', mode='before')
+    @classmethod
+    def validate_ints(cls, v, info: FieldValidationInfo):
+        return validate_strict_int(v, info.field_name.replace('_', ' ').title())
 
 
 class ProductUpdate(BaseModel):
@@ -52,9 +53,10 @@ class ProductUpdate(BaseModel):
     min_stock_alert: Optional[int] = None
     description: Optional[str] = None
 
-    @validator('stock_qty', 'min_stock_alert', pre=True)
-    def validate_ints(cls, v, field):
-        return validate_strict_int(v, field.name.replace('_', ' ').title())
+    @field_validator('stock_qty', 'min_stock_alert', mode='before')
+    @classmethod
+    def validate_ints(cls, v, info: FieldValidationInfo):
+        return validate_strict_int(v, info.field_name.replace('_', ' ').title())
 
 
 class ProductResponse(BaseModel):
@@ -74,6 +76,16 @@ class ProductResponse(BaseModel):
     min_stock_alert: int
     description: Optional[str]
     created_at: datetime
+
+    @field_validator('stock_qty', 'min_stock_alert', mode='before')
+    @classmethod
+    def cast_to_int(cls, v, info: FieldValidationInfo):
+        if v is None: return v
+        try:
+            # Leniently round and cast to int for Response
+            return int(round(float(v)))
+        except (ValueError, TypeError):
+            return 0
 
     class Config:
         from_attributes = True

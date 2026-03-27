@@ -71,7 +71,7 @@ async function handleLogin(e) {
 
   const formData = new FormData(form);
   try {
-    const API = window.API_BASE || 'http://localhost:8000';
+    const API = window.API_BASE || 'http://127.0.0.1:8000';
     const resp = await fetch(API + '/auth/login', {
       method: 'POST',
       body: formData,
@@ -164,7 +164,7 @@ function processBarcode(code) {
   if (input) input.value = code;
 
   const token = getAuthToken();
-  const API = window.API_BASE || 'http://localhost:8000';
+  const API = window.API_BASE || 'http://127.0.0.1:8000';
 
   fetch(API + '/products/barcode/' + encodeURIComponent(code), {
     headers: { 'Authorization': 'Bearer ' + token }
@@ -263,7 +263,7 @@ function setRange(el, range) {
 /* ── Scale reading ──────────────────────────────────── */
 function readScale() {
   const token = getAuthToken();
-  const API = window.API_BASE || 'http://localhost:8000';
+  const API = window.API_BASE || 'http://127.0.0.1:8000';
 
   fetch(API + '/hardware/scale', {
     headers: { 'Authorization': 'Bearer ' + token }

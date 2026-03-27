@@ -32,7 +32,7 @@ logger = logging.getLogger("frontend")
 logging.basicConfig(level=logging.INFO)
 
 # ── Config ──────────────────────────────────────────────────────────────────
-BACKEND_URL: str = os.getenv("BACKEND_URL", os.getenv("API_BASE", "http://localhost:8000"))
+BACKEND_URL: str = os.getenv("BACKEND_URL", os.getenv("API_BASE", "http://127.0.0.1:8000"))
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 STATIC_DIR    = Path(__file__).parent / "static"
 
@@ -599,9 +599,12 @@ async def analytics_peak_hours(request: Request):
 # ════════════════════════════════════════════════════════════════════════════
 
 @app.get("/inventory/products", response_class=HTMLResponse)
-async def inv_products(request: Request):
+async def inv_products(request: Request, q: Optional[str] = None):
     token = _token(request)
-    resp = await _api("get", "/products/", token=token)
+    if q:
+        resp = await _api("get", f"/products/search?q={q}", token=token)
+    else:
+        resp = await _api("get", "/products/", token=token)
     products = resp["data"] or []
     rows = ""
     for p in products:
@@ -646,7 +649,23 @@ async def inv_products(request: Request):
             </button>
           </td>
         </tr>"""
+    
+    search_bar = f"""
+    <div style="margin-bottom:16px; display:flex; align-items:center; gap:12px; background:var(--surface); padding:12px; border:1px solid var(--border); border-radius:var(--radius-sm);">
+      <div style="font-size:0.9rem; font-weight:700; color:var(--text);">🔍 Find Products:</div>
+      <input type="search" name="q" class="form-control" style="width:300px; margin-bottom:0;"
+             placeholder="Search by name, barcode or category..."
+             value="{q or ''}"
+             hx-get="/inventory/products"
+             hx-trigger="keyup changed delay:350ms"
+             hx-target="#inv-content"
+             hx-indicator="#inv-search-spinner">
+      <span class="htmx-indicator spinner" id="inv-search-spinner"></span>
+    </div>
+    """
+
     return HTMLResponse(f"""
+    {search_bar}
     <div style="overflow-x:auto;">
     <table class="data-table">
       <thead><tr>
@@ -695,20 +714,20 @@ async def inv_add_form(request: Request):
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Base Unit</label>
-            <select class="form-control" name="base_unit">
-              <option value="pcs">pcs</option>
-              <option value="g">g</option>
-              <option value="ml">ml</option>
-            </select>
+            <label class="form-label">Price (₹) *</label>
+            <input class="form-control" name="price" type="number" min="0" step="1" required>
           </div>
           <div class="form-group">
             <label class="form-label">Unit Value</label>
             <input class="form-control" name="unit_value" type="number" step="any" value="1" required>
           </div>
           <div class="form-group">
-            <label class="form-label">Price (₹) *</label>
-            <input class="form-control" name="price" type="number" min="0" step="1" required>
+            <label class="form-label">Base Unit</label>
+            <select class="form-control" name="base_unit">
+              <option value="pcs">pcs</option>
+              <option value="g">g</option>
+              <option value="ml">ml</option>
+            </select>
           </div>
           <div class="form-group">
             <label class="form-label">Tax Rate %</label>
@@ -822,8 +841,12 @@ async def inv_edit_form(request: Request, product_id: int):
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Stock Unit (e.g. pcs, packets)</label>
-            <input class="form-control" name="stock_unit" value="{p.get('stock_unit','pcs')}" required>
+            <label class="form-label">Price (₹) *</label>
+            <input class="form-control" name="price" type="number" min="0" step="1" value="{int(p.get('price',0))}" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Unit Value (e.g. 1000 for 1kg=1000g)</label>
+            <input class="form-control" name="unit_value" type="number" step="any" value="{p.get('unit_value', 1.0)}" required>
           </div>
           <div class="form-group">
             <label class="form-label">Base Unit (for inventory tracking)</label>
@@ -834,12 +857,8 @@ async def inv_edit_form(request: Request, product_id: int):
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Unit Value (e.g. 1000 for 1kg=1000g)</label>
-            <input class="form-control" name="unit_value" type="number" step="any" value="{p.get('unit_value', 1.0)}" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Price (₹) *</label>
-            <input class="form-control" name="price" type="number" min="0" step="1" value="{int(p.get('price',0))}" required>
+            <label class="form-label">Stock Unit (e.g. pcs, packets)</label>
+            <input class="form-control" name="stock_unit" value="{p.get('stock_unit','pcs')}" required>
           </div>
           <div class="form-group">
             <label class="form-label">Tax Rate %</label>
@@ -916,12 +935,36 @@ async def inv_restock_form(request: Request):
       <form hx-post="/inventory/restock"
             hx-target="#inv-content"
             hx-swap="innerHTML">
-        <div class="form-group">
-          <label class="form-label">Select Product</label>
-          <select class="form-control" name="product_id" required>
-            {options}
-          </select>
+        <div class="form-group" style="margin-bottom:20px;">
+          <label class="form-label" style="display:flex; justify-content:space-between;">
+            <span>Choose Product</span>
+            <span style="font-size:0.7rem; font-weight:400; color:var(--text-muted);">(Filter list using search below)</span>
+          </label>
+          <div style="position:relative; margin-bottom:10px;">
+            <input type="text" class="form-control" id="restock-search" 
+                   placeholder="🔍 Type product name to search..." 
+                   onkeyup="filterRestockList()"
+                   style="border-bottom-left-radius:0; border-bottom-right-radius:0;">
+            <select class="form-control" name="product_id" id="product-select" size="6" required
+                    style="border-top-left-radius:0; border-top-right-radius:0; height:auto;">
+              {options}
+            </select>
+          </div>
         </div>
+        <script>
+        function filterRestockList() {{
+          const input = document.getElementById('restock-search');
+          const filter = input.value.toLowerCase();
+          const select = document.getElementById('product-select');
+          const options = select.getElementsByTagName('option');
+          for (let i = 0; i < options.length; i++) {{
+            const txt = options[i].textContent || options[i].innerText;
+            const match = txt.toLowerCase().indexOf(filter) > -1;
+            options[i].style.display = match ? "" : "none";
+            // Auto-select first match if it's high confidence but actually it's better to let user pick
+          }}
+        }}
+        </script>
         <div class="form-group">
           <label class="form-label">Quantity to Add (pcs) *</label>
           <input class="form-control" name="qty" type="number" min="1" step="1" value="1" required 
