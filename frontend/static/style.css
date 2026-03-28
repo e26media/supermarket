@@ -1290,21 +1290,26 @@ select.form-control option {
 }
 
 .inv-tab {
-  padding: 8px 18px;
-  font-size: 0.85rem;
+  padding: 10px 22px;
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--text-muted);
-  opacity: 1;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: all var(--transition);
+  border-bottom: 3px solid transparent;
+  transition: all 0.25s ease;
   margin-bottom: -1px;
 }
 
-.inv-tab.active,
-.inv-tab:hover {
+.inv-tab.active {
   color: var(--accent);
   border-bottom-color: var(--accent);
+  background: rgba(14, 165, 233, 0.1);
+  border-radius: 8px 8px 0 0;
+}
+
+.inv-tab:hover:not(.active) {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 /* ── Responsive tweaks ──────────────────────────── */

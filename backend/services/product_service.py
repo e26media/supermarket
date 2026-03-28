@@ -2,7 +2,7 @@
 services/product_service.py — CRUD operations for products.
 """
 from typing import List, Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException
 from backend.models.product import Product
 from backend.schemas.product import ProductCreate, ProductUpdate
@@ -12,7 +12,7 @@ class ProductService:
 
     @staticmethod
     def get_all(db: Session, skip: int = 0, limit: int = 200) -> List[Product]:
-        return db.query(Product).offset(skip).limit(limit).all()
+        return db.query(Product).filter(Product.is_active == True).offset(skip).limit(limit).all()
 
     @staticmethod
     def get_by_id(db: Session, product_id: int) -> Product:
@@ -34,9 +34,10 @@ class ProductService:
         return (
             db.query(Product)
             .filter(
-                (Product.name.ilike(pattern)) |
-                (Product.barcode.ilike(pattern)) |
-                (Product.category.ilike(pattern))
+                (Product.is_active == True) &
+                ((Product.name.ilike(pattern)) |
+                 (Product.barcode.ilike(pattern)) |
+                 (Product.category.ilike(pattern)))
             )
             .limit(50)
             .all()
@@ -67,15 +68,24 @@ class ProductService:
 
     @staticmethod
     def delete(db: Session, product_id: int) -> dict:
+        from sqlalchemy.exc import IntegrityError
         product = ProductService.get_by_id(db, product_id)
-        db.delete(product)
-        db.commit()
-        return {"message": f"Product {product_id} deleted"}
+        try:
+            db.delete(product)
+            db.commit()
+            return {"message": f"Product {product_id} hard deleted"}
+        except IntegrityError:
+            db.rollback()
+            # Fallback to Soft Delete
+            product.is_active = False
+            db.commit()
+            return {"message": f"Product {product_id} soft deleted (records preserved)"}
 
     @staticmethod
     def get_low_stock(db: Session) -> List[Product]:
         return (
             db.query(Product)
+            .filter(Product.is_active == True)
             .filter(Product.stock_qty <= Product.min_stock_alert)
             .all()
         )

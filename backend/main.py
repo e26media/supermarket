@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 # ── Import DB and models to trigger Base registration ──────────────────────────
 from backend.database import engine, SessionLocal
-from backend.models import User, Product, Customer, Sale, SaleItem, InventoryLog, CreditLedger
+from backend.models import User, Product, Customer, Sale, SaleItem, InventoryLog, CreditLedger, Subcategory, Category
 from backend.database import Base
 
 # ── Import routers ─────────────────────────────────────────────────────────────
@@ -32,6 +32,8 @@ from backend.routers.inventory import router as inventory_router
 from backend.routers.dashboard import router as dashboard_router
 from backend.routers.hardware import router as hardware_router
 from backend.routers.customers import router as customers_router
+from backend.routers.subcategories import router as subcategories_router
+from backend.routers.categories import router as categories_router
 
 # ── Create FastAPI app ─────────────────────────────────────────────────────────
 app = FastAPI(
@@ -57,6 +59,8 @@ app.include_router(inventory_router)
 app.include_router(dashboard_router)
 app.include_router(hardware_router)
 app.include_router(customers_router)
+app.include_router(subcategories_router)
+app.include_router(categories_router)
 
 
 # ── Startup event ──────────────────────────────────────────────────────────────
@@ -78,6 +82,16 @@ def _run_migrations():
         "ALTER TABLE products ADD COLUMN IF NOT EXISTS base_unit TEXT;",
         "ALTER TABLE products ADD COLUMN IF NOT EXISTS unit_value FLOAT DEFAULT 1.0;",
         "ALTER TABLE products ADD COLUMN IF NOT EXISTS stock_unit TEXT DEFAULT 'pcs';",
+        "CREATE TABLE IF NOT EXISTS categories (id SERIAL PRIMARY KEY, name TEXT UNIQUE NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);",
+        "ALTER TABLE categories ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;",
+        "INSERT INTO categories (name) VALUES ('food'), ('dairy'), ('stationaries'), ('processed foods'), ('utensils'), ('readymade items'), ('house hold items') ON CONFLICT DO NOTHING;",
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;",
+        "CREATE TABLE IF NOT EXISTS subcategories (id SERIAL PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);",
+        "ALTER TABLE subcategories ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;",
+        "ALTER TABLE subcategories ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'general';",
+        "ALTER TABLE subcategories DROP COLUMN IF EXISTS category_id;",
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS subcategory_id INTEGER REFERENCES subcategories(id);",
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS discount FLOAT DEFAULT 0.0;",
         # Add future migrations below this line ↓
         # "ALTER TABLE products ADD COLUMN IF NOT EXISTS category TEXT;",
         # "ALTER TABLE customers ADD COLUMN IF NOT EXISTS loyalty_points INT DEFAULT 0;",

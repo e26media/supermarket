@@ -5,9 +5,16 @@ from backend.models.sale import Sale
 
 class CustomerService:
     @staticmethod
-    def get_customers_summary(db: Session):
+    def get_customers_summary(db: Session, q: str = None):
         # We need to return id, name, phone, total_orders, total_spending, last_purchase
-        customers = db.query(Customer).order_by(Customer.name).all()
+        query = db.query(Customer)
+        if q:
+            pattern = f"%{q}%"
+            query = query.filter(
+                (Customer.name.ilike(pattern)) |
+                (Customer.phone.ilike(pattern))
+            )
+        customers = query.order_by(Customer.name).all()
         result = []
         for c in customers:
             # Aggregate sales for this customer

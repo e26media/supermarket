@@ -1,0 +1,4 @@
+<option value="">-- Select Subcategory --</option>
+{% for sub in subcategories %}
+<option value="{{ sub.id }}">{{ sub.name }}</option>
+{% endfor %}

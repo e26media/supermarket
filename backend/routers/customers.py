@@ -8,5 +8,5 @@ from backend.models.user import User
 router = APIRouter(prefix="/customers", tags=["Customers"])
 
 @router.get("/")
-def get_customers(db: Session = Depends(get_db), _: User = Depends(get_current_user)):
-    return CustomerService.get_customers_summary(db)
+def get_customers(q: str = None, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+    return CustomerService.get_customers_summary(db, q=q)

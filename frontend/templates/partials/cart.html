@@ -101,11 +101,9 @@
 
   <!-- Cart Summary -->
   {% set subtotal   = cart|sum(attribute='subtotal') %}
-  {% set disc_amt   = subtotal * (cart_discount / 100) %}
-  {% set after_disc = subtotal - disc_amt %}
-  {% set gst_rate   = 0.05 %}
-  {% set gst_amt    = after_disc * gst_rate %}
-  {% set grand      = after_disc %}
+  {% set total_tax  = cart|sum(attribute='tax') %}
+  {% set disc_amt   = (subtotal + total_tax) * (cart_discount / 100) %}
+  {% set grand      = subtotal + total_tax - disc_amt %}
 
   <div class="cart-summary">
 
@@ -131,8 +129,8 @@
     </div>
 
     <div class="cart-sum-row">
-      <span>GST (5%)</span>
-      <span style="color:var(--text-muted);">₹{{ gst_amt|int }}</span>
+      <span>Total Tax</span>
+      <span style="color:var(--text-muted);">₹{{ total_tax|int }}</span>
     </div>
 
     <div class="cart-sum-divider"></div>

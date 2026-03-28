@@ -57,9 +57,10 @@ def _get_cart(session_id: str) -> dict:
     return CARTS[session_id]
 
 def _recalc(cart: dict):
-    """Recalculate subtotals on every item."""
+    """Recalculate subtotals and taxes on every item."""
     for item in cart["items"]:
         item["subtotal"] = item["unit_price"] * item["qty"] * (1 - item["discount"] / 100)
+        item["tax"] = item["subtotal"] * (item.get("tax_rate", 0) / 100)
 
 def _session_id(request: Request) -> str:
     """Identify the cart session. Prioritizes the JWT token if present."""
@@ -177,6 +178,181 @@ async def settings_page(request: Request):
 
 
 # ════════════════════════════════════════════════════════════════════════════
+#  CATEGORY MANAGEMENT — /inventory/categories
+# ════════════════════════════════════════════════════════════════════════════
+
+@app.get("/inventory/categories", response_class=HTMLResponse)
+async def inv_categories_tab(request: Request):
+    token = _token(request)
+    cat_resp = await _api("get", "/categories/", token=token)
+    categories = cat_resp["data"] or []
+    
+    return HTMLResponse(f"""
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+        <!-- Left Panel: Categories -->
+        <div class="card">
+            <div class="card-title">📂 Categories</div>
+            <form hx-post="/inventory/categories/add" hx-target="#category-list-container" hx-swap="innerHTML" style="margin-bottom:15px;">
+                <div class="form-group">
+                    <label class="form-label">New Category Name</label>
+                    <div style="display:flex; gap:8px;">
+                        <input class="form-control" name="name" required placeholder="e.g. frozen foods" style="margin-bottom:0;">
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </div>
+                </div>
+            </form>
+            <div id="category-list-container" hx-get="/inventory/categories/list" hx-trigger="load">
+                <span class="spinner"></span> Loading...
+            </div>
+        </div>
+
+        <!-- Right Panel: Subcategories -->
+        <div class="card">
+            <div class="card-title">🌿 Subcategories</div>
+            <div class="form-group" style="margin-bottom:15px;">
+                <label class="form-label">Select Category</label>
+                <select class="form-control" id="mgmt-category-select" name="category" 
+                        hx-get="/inventory/subcategories/list" hx-target="#subcategory-list-container" hx-trigger="change, load">
+                    {"".join(f'<option value="{c["name"]}">{c["name"]}</option>' for c in categories)}
+                </select>
+            </div>
+            <form hx-post="/inventory/subcategories/add" hx-target="#subcategory-list-container" hx-swap="innerHTML" style="margin-bottom:15px;">
+                <input type="hidden" name="category" id="hidden-category-input">
+                <script>
+                    document.body.addEventListener('htmx:configRequest', (event) => {{
+                        if (event.detail.path === '/inventory/subcategories/add') {{
+                            event.detail.parameters['category'] = document.getElementById('mgmt-category-select').value;
+                        }}
+                    }});
+                </script>
+                <div class="form-group">
+                    <label class="form-label">New Subcategory Name</label>
+                    <div style="display:flex; gap:8px;">
+                        <input class="form-control" name="name" required placeholder="e.g. ice cream" style="margin-bottom:0;">
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </div>
+                </div>
+            </form>
+            <div id="subcategory-list-container">
+                <div style="text-align:center; padding:20px; color:var(--text-muted);">Select a category to see subcategories</div>
+            </div>
+        </div>
+    </div>
+    """)
+
+@app.get("/inventory/categories/list", response_class=HTMLResponse)
+async def inv_categories_list(request: Request):
+    token = _token(request)
+    resp = await _api("get", "/categories/", token=token)
+    categories = resp["data"] or []
+    rows = "".join(f"""
+    <div id="category-row-{c['id']}" style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+        <span>{c['name']}</span>
+        <div style="display:flex; gap:5px;">
+            <button class="btn btn-secondary btn-sm" hx-get="/inventory/categories/edit/{c['id']}" hx-target="#category-row-{c['id']}" hx-swap="outerHTML">✏️</button>
+            <button class="btn btn-danger btn-sm" hx-delete="/inventory/categories/{c['id']}" hx-target="#category-list-container" hx-confirm="Delete category '{c['name']}'?">🗑️</button>
+        </div>
+    </div>""" for c in categories)
+    return HTMLResponse(rows if rows else "No categories found.")
+
+@app.post("/inventory/categories/add", response_class=HTMLResponse)
+async def inv_categories_add(request: Request, name: str = Form(...)):
+    token = _token(request)
+    await _api("post", "/categories/", token=token, json={"name": name.strip().lower()})
+    return await inv_categories_list(request)
+
+@app.delete("/inventory/categories/{cat_id}", response_class=HTMLResponse)
+async def inv_categories_delete(request: Request, cat_id: int):
+    token = _token(request)
+    await _api("delete", f"/categories/{cat_id}", token=token)
+    return await inv_categories_list(request)
+
+@app.get("/inventory/categories/edit/{cat_id}", response_class=HTMLResponse)
+async def inv_categories_edit_row(request: Request, cat_id: int):
+    token = _token(request)
+    resp = await _api("get", "/categories/", token=token)
+    categories = resp["data"] or []
+    cat = next((c for c in categories if c["id"] == cat_id), None)
+    if not cat: return HTMLResponse("Not found")
+    
+    return HTMLResponse(f"""
+    <div id="category-row-{cat_id}" style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+        <form hx-post="/inventory/categories/edit/{cat_id}" hx-target="#category-list-container" style="display:flex; gap:8px; width:100%;">
+            <input class="form-control" name="name" value="{cat['name']}" style="margin-bottom:0; flex:1;">
+            <button type="submit" class="btn btn-primary btn-sm">💾</button>
+            <button type="button" class="btn btn-secondary btn-sm" hx-get="/inventory/categories/list" hx-target="#category-list-container">❌</button>
+        </form>
+    </div>
+    """)
+
+@app.post("/inventory/categories/edit/{cat_id}", response_class=HTMLResponse)
+async def inv_categories_update(request: Request, cat_id: int, name: str = Form(...)):
+    token = _token(request)
+    await _api("put", f"/categories/{cat_id}", token=token, json={"name": name.strip().lower()})
+    return await inv_categories_list(request)
+
+@app.get("/inventory/subcategories/list", response_class=HTMLResponse)
+async def inv_subcategories_list(request: Request, category: str = Query("")):
+    token = _token(request)
+    if not category: return HTMLResponse("")
+    resp = await _api("get", f"/subcategories/?category={category}", token=token)
+    subs = resp["data"] or []
+    rows = "".join(f"""
+    <div id="subcategory-row-{s['id']}" style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+        <span>{s['name']}</span>
+        <div style="display:flex; gap:5px;">
+            <button class="btn btn-secondary btn-sm" hx-get="/inventory/subcategories/edit/{s['id']}" hx-target="#subcategory-row-{s['id']}" hx-swap="outerHTML">✏️</button>
+            <button class="btn btn-danger btn-sm" hx-delete="/inventory/subcategories/{s['id']}" hx-target="#subcategory-list-container" hx-confirm="Delete subcategory '{s['name']}'?">🗑️</button>
+        </div>
+    </div>""" for s in subs)
+    return HTMLResponse(rows if rows else "No subcategories found for this category.")
+
+@app.post("/inventory/subcategories/add", response_class=HTMLResponse)
+async def inv_subcategories_add(request: Request, name: str = Form(...), category: str = Form(...)):
+    token = _token(request)
+    await _api("post", "/subcategories/", token=token, json={"name": name.strip().lower(), "category": category})
+    return await inv_subcategories_list(request, category=category)
+
+@app.delete("/inventory/subcategories/{sub_id}", response_class=HTMLResponse)
+async def inv_subcategories_delete(request: Request, sub_id: int):
+    token = _token(request)
+    # To refresh the list, we need the parent category. For simplicity, we'll try to get it.
+    sub_resp = await _api("get", f"/subcategories/", token=token) # hack to find category
+    subs = sub_resp["data"] or []
+    parent_cat = next((s["category"] for s in subs if s["id"] == sub_id), "")
+    
+    await _api("delete", f"/subcategories/{sub_id}", token=token)
+    return await inv_subcategories_list(request, category=parent_cat)
+
+@app.get("/inventory/subcategories/edit/{sub_id}", response_class=HTMLResponse)
+async def inv_subcategories_edit_row(request: Request, sub_id: int):
+    token = _token(request)
+    # We need to find the subcategory name and the parent category
+    sub_resp = await _api("get", f"/subcategories/", token=token)
+    subs = sub_resp["data"] or []
+    sub = next((s for s in subs if s["id"] == sub_id), None)
+    if not sub: return HTMLResponse("Not found")
+
+    return HTMLResponse(f"""
+    <div id="subcategory-row-{sub_id}" style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+        <form hx-post="/inventory/subcategories/edit/{sub_id}" hx-target="#subcategory-list-container" style="display:flex; gap:8px; width:100%;">
+            <input type="hidden" name="category" value="{sub['category']}">
+            <input class="form-control" name="name" value="{sub['name']}" style="margin-bottom:0; flex:1;">
+            <button type="submit" class="btn btn-primary btn-sm">💾</button>
+            <button type="button" class="btn btn-secondary btn-sm" 
+                    hx-get="/inventory/subcategories/list?category={sub['category']}" hx-target="#subcategory-list-container">❌</button>
+        </form>
+    </div>
+    """)
+
+@app.post("/inventory/subcategories/edit/{sub_id}", response_class=HTMLResponse)
+async def inv_subcategories_update(request: Request, sub_id: int, name: str = Form(...), category: str = Form(...)):
+    token = _token(request)
+    await _api("put", f"/subcategories/{sub_id}", token=token, json={"name": name.strip().lower(), "category": category})
+    return await inv_subcategories_list(request, category=category)
+
+
+# ════════════════════════════════════════════════════════════════════════════
 #  POS PARTIAL ROUTES — /pos/*
 # ════════════════════════════════════════════════════════════════════════════
 
@@ -257,12 +433,14 @@ async def add_to_cart(request: Request, product_id: int):
     cart["items"].append({
         "product_id": product_id,
         "name": product["name"],
-        "unit": "pcs",
+        "unit": product.get("unit", "pcs"),
         "unit_price": product["price"],
         "qty": 1,
-        "discount": 0.0,
+        "discount": product.get("discount", 0.0),
+        "tax_rate": product.get("tax_rate", 0.0),
         "image_data": product.get("image_data"),
         "subtotal": product["price"],
+        "tax": product["price"] * (product.get("tax_rate", 0.0) / 100)
     })
     _recalc(cart)
     return templates.TemplateResponse(request=request, name="partials/cart.html", context=_ctx(request, cart=cart["items"], cart_discount=cart["cart_discount"])
@@ -347,8 +525,9 @@ async def modal_payment(request: Request,
     cart["cust_phone"] = cust_phone
     _recalc(cart)
     subtotal = sum(i["subtotal"] for i in cart["items"])
-    disc = subtotal * (cart.get("cart_discount", 0) / 100)
-    grand_total = subtotal - disc
+    total_tax = sum(i.get("tax", 0) for i in cart["items"])
+    disc = (subtotal + total_tax) * (cart.get("cart_discount", 0) / 100)
+    grand_total = subtotal + total_tax - disc
     return templates.TemplateResponse(request=request, name="partials/payment.html", context=_ctx(request, cust_name=cust_name, cust_phone=cust_phone, grand_total=grand_total)
     )
 
@@ -595,6 +774,19 @@ async def analytics_peak_hours(request: Request):
 
 
 # ════════════════════════════════════════════════════════════════════════════
+#  SUBCATEGORY OPTIONS — /subcategories/options
+# ════════════════════════════════════════════════════════════════════════════
+
+@app.get("/subcategories/options", response_class=HTMLResponse)
+async def subcategory_options(request: Request, category: str = Query("")):
+    token = _token(request)
+    if not category:
+        return templates.TemplateResponse(request=request, name="partials/subcategory_options.html", context=_ctx(request, subcategories=[]))
+    resp = await _api("get", f"/subcategories/?category={category}", token=token)
+    subcategories = resp["data"] or []
+    return templates.TemplateResponse(request=request, name="partials/subcategory_options.html", context=_ctx(request, subcategories=subcategories))
+
+# ════════════════════════════════════════════════════════════════════════════
 #  INVENTORY PARTIAL ROUTES — /inventory/*
 # ════════════════════════════════════════════════════════════════════════════
 
@@ -606,6 +798,7 @@ async def inv_products(request: Request, q: Optional[str] = None):
     else:
         resp = await _api("get", "/products/", token=token)
     products = resp["data"] or []
+    print(f"DEBUG: inv_products -> status: {resp['status']}, count: {len(products)}, error: {resp['error']}")
     rows = ""
     for p in products:
         unit = p.get("unit", "pcs")
@@ -630,6 +823,7 @@ async def inv_products(request: Request, q: Optional[str] = None):
           <td>{p.get('category') or '—'}</td>
           <td>{p.get('unit_value', '')} {p.get('base_unit', '') or p.get('unit', '')}</td>
           <td>₹{int(p.get('price', 0))}</td>
+          <td>{p.get('discount', 0)}%</td>
           <td class="{'low-stock' if low else ''}">{qty_disp} pcs</td>
           <td>{status_badge}</td>
           <td>
@@ -664,13 +858,19 @@ async def inv_products(request: Request, q: Optional[str] = None):
     </div>
     """
 
+    if resp["error"]:
+        error_html = f'<div style="color:var(--accent);padding:12px;background:rgba(255,0,0,0.1);border-radius:8px;margin-bottom:16px;">❌ {resp["error"]}</div>'
+    else:
+        error_html = ""
+
     return HTMLResponse(f"""
+    {error_html}
     {search_bar}
     <div style="overflow-x:auto;">
     <table class="data-table">
       <thead><tr>
         <th>ID</th><th>Image</th><th>Name</th><th>Barcode</th><th>Category</th>
-        <th>Size</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th>
+        <th>Size</th><th>Price</th><th>Discount</th><th>Stock</th><th>Status</th><th>Actions</th>
       </tr></thead>
       <tbody>{rows}</tbody>
     </table>
@@ -684,6 +884,11 @@ async def inv_products(request: Request, q: Optional[str] = None):
 
 @app.get("/inventory/add-form", response_class=HTMLResponse)
 async def inv_add_form(request: Request):
+    token = _token(request)
+    resp = await _api("get", "/categories/", token=token)
+    categories = resp["data"] or []
+    cat_options = "".join(f'<option value="{c["name"]}">{c["name"]}</option>' for c in categories)
+
     return HTMLResponse(f"""
     <div class="card">
       <div class="card-title" style="margin-bottom:16px;">➕ Add New Product</div>
@@ -702,20 +907,27 @@ async def inv_add_form(request: Request):
           </div>
           <div class="form-group">
             <label class="form-label">Category</label>
-            <select class="form-control" name="category">
+            <select class="form-control" name="category"
+                    hx-get="/subcategories/options"
+                    hx-target="#subcategory-select"
+                    hx-trigger="change">
               <option value="">-- Select Category --</option>
-              <option value="food">food</option>
-              <option value="dairy">dairy</option>
-              <option value="stationaries">stationaries</option>
-              <option value="processed foods">processed foods</option>
-              <option value="utensils">utensils</option>
-              <option value="readymade items">readymade items</option>
-              <option value="house hold items">house hold items</option>
+              {cat_options}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Subcategory</label>
+            <select class="form-control" name="subcategory_id" id="subcategory-select">
+              <option value="">-- Select Subcategory --</option>
             </select>
           </div>
           <div class="form-group">
             <label class="form-label">Price (₹) *</label>
             <input class="form-control" name="price" type="number" min="0" step="1" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tax Rate %</label>
+            <input class="form-control" name="tax_rate" type="number" min="0" max="100" value="0" step="1">
           </div>
           <div class="form-group">
             <label class="form-label">Unit Value</label>
@@ -730,8 +942,8 @@ async def inv_add_form(request: Request):
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Tax Rate %</label>
-            <input class="form-control" name="tax_rate" type="number" min="0" max="100" value="0" step="1">
+            <label class="form-label">Discount %</label>
+            <input class="form-control" name="discount" type="number" min="0" max="100" value="0" step="1">
           </div>
           <div class="form-group">
             <label class="form-label">Opening Stock (pcs) *</label>
@@ -765,9 +977,11 @@ async def inv_create_product(request: Request,
                               name: str = Form(...),
                               barcode: Optional[str] = Form(None),
                               category: Optional[str] = Form(None),
+                              subcategory_id: Optional[int] = Form(None),
                               unit: str = Form("pcs"),
                               price: float = Form(...),
                               tax_rate: float = Form(0),
+                               discount: float = Form(0),
                                base_unit: str = Form("pcs"),
                                unit_value: float = Form(1.0),
                                stock_unit: str = Form("pcs"),
@@ -779,7 +993,8 @@ async def inv_create_product(request: Request,
     image_data = await _to_base64(image)
     payload = {
         "name": name, "barcode": barcode or None, "category": category,
-        "unit": base_unit, "price": price, "tax_rate": tax_rate,
+        "subcategory_id": subcategory_id,
+        "unit": base_unit, "price": price, "tax_rate": tax_rate, "discount": discount,
         "base_unit": base_unit, "unit_value": unit_value, "stock_unit": stock_unit,
         "stock_qty": stock_qty, "min_stock_alert": min_stock_alert,
         "description": description or None,
@@ -799,8 +1014,8 @@ async def inv_create_product(request: Request,
 async def inv_delete_product(request: Request, product_id: int):
     token = _token(request)
     await _api("delete", f"/products/{product_id}", token=token)
-    # Re-render the product list
-    return RedirectResponse(url="/inventory/products", status_code=303)
+    # Re-render the product list segment (partial)
+    return await inv_products(request)
 
 
 @app.get("/inventory/edit-form/{product_id}", response_class=HTMLResponse)
@@ -812,11 +1027,21 @@ async def inv_edit_form(request: Request, product_id: int):
         return HTMLResponse('<div style="color:var(--accent);padding:12px;">❌ Product not found.</div>')
     
     # Generate category options
-    cat_list = ["food", "dairy", "stationaries", "processed foods", "utensils", "readymade items", "house hold items"]
+    cat_resp = await _api("get", "/categories/", token=token)
+    categories = cat_resp["data"] or []
     cat_options = '<option value="">-- Select Category --</option>'
-    for cat in cat_list:
-        selected = 'selected' if p.get('category') == cat else ''
-        cat_options += f'<option value="{cat}" {selected}>{cat}</option>'
+    for cat in categories:
+        selected = 'selected' if p.get('category') == cat['name'] else ''
+        cat_options += f'<option value="{cat["name"]}" {selected}>{cat["name"]}</option>'
+
+    # Generate subcategory options if category exists
+    sub_options = '<option value="">-- Select Subcategory --</option>'
+    if p.get('category'):
+        sub_resp = await _api("get", f"/subcategories/?category={p.get('category')}", token=token)
+        subs = sub_resp["data"] or []
+        for s in subs:
+            selected = 'selected' if p.get('subcategory_id') == s['id'] else ''
+            sub_options += f'<option value="{s["id"]}" {selected}>{s["name"]}</option>'
 
     return HTMLResponse(f"""
     <div class="modal" style="margin:20px auto;">
@@ -836,13 +1061,26 @@ async def inv_edit_form(request: Request, product_id: int):
           </div>
           <div class="form-group">
             <label class="form-label">Category</label>
-            <select class="form-control" name="category">
+            <select class="form-control" name="category"
+                    hx-get="/subcategories/options"
+                    hx-target="#subcategory-select-edit"
+                    hx-trigger="change">
               {cat_options}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Subcategory</label>
+            <select class="form-control" name="subcategory_id" id="subcategory-select-edit">
+              {sub_options}
             </select>
           </div>
           <div class="form-group">
             <label class="form-label">Price (₹) *</label>
             <input class="form-control" name="price" type="number" min="0" step="1" value="{int(p.get('price',0))}" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tax Rate %</label>
+            <input class="form-control" name="tax_rate" type="number" min="0" max="100" value="{int(p.get('tax_rate',0))}" step="1">
           </div>
           <div class="form-group">
             <label class="form-label">Unit Value (e.g. 1000 for 1kg=1000g)</label>
@@ -857,12 +1095,12 @@ async def inv_edit_form(request: Request, product_id: int):
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Stock Unit (e.g. pcs, packets)</label>
-            <input class="form-control" name="stock_unit" value="{p.get('stock_unit','pcs')}" required>
+            <label class="form-label">Discount %</label>
+            <input class="form-control" name="discount" type="number" min="0" max="100" value="{int(p.get('discount',0))}" step="1">
           </div>
           <div class="form-group">
-            <label class="form-label">Tax Rate %</label>
-            <input class="form-control" name="tax_rate" type="number" min="0" max="100" value="{int(p.get('tax_rate',0))}" step="1">
+            <label class="form-label">Stock Unit (e.g. pcs, packets)</label>
+            <input class="form-control" name="stock_unit" value="{p.get('stock_unit','pcs')}" required>
           </div>
           <div class="form-group">
             <label class="form-label">Min Stock Alert (pcs) *</label>
@@ -892,9 +1130,11 @@ async def inv_update_product(request: Request,
                               name: str = Form(...),
                               barcode: Optional[str] = Form(None),
                               category: Optional[str] = Form(None),
+                              subcategory_id: Optional[int] = Form(None),
                               unit: str = Form("pcs"),
                               price: float = Form(...),
                               tax_rate: float = Form(0),
+                              discount: float = Form(0),
                               base_unit: Optional[str] = Form(None),
                               unit_value: Optional[float] = Form(None),
                               stock_unit: Optional[str] = Form("pcs"),
@@ -905,8 +1145,9 @@ async def inv_update_product(request: Request,
     image_data = await _to_base64(image)
     payload = {
         "name": name, "barcode": barcode or None, "category": category,
+        "subcategory_id": subcategory_id,
         "unit": base_unit if base_unit else unit, 
-        "price": price, "tax_rate": tax_rate,
+        "price": price, "tax_rate": tax_rate, "discount": discount,
         "base_unit": base_unit, "unit_value": unit_value, "stock_unit": stock_unit,
         "min_stock_alert": min_stock_alert,
         "description": description or None,
@@ -927,30 +1168,72 @@ async def inv_restock_form(request: Request):
     token = _token(request)
     resp = await _api("get", "/products/", token=token)
     products = resp["data"] or []
-    options = "".join(f'<option value="{p["id"]}">{p["name"]} (Stock: {int(p["stock_qty"])} {p["unit"]})</option>'
+    options = "".join(f'<option value="{p["id"]}">{p["name"]} (Stock: {int(p["stock_qty"])})</option>'
                       for p in products)
     return HTMLResponse(f"""
-    <div class="card">
-      <div class="card-title" style="margin-bottom:16px;">🔄 Restock Product</div>
-      <form hx-post="/inventory/restock"
-            hx-target="#inv-content"
-            hx-swap="innerHTML">
-        <div class="form-group" style="margin-bottom:20px;">
-          <label class="form-label" style="display:flex; justify-content:space-between;">
-            <span>Choose Product</span>
-            <span style="font-size:0.7rem; font-weight:400; color:var(--text-muted);">(Filter list using search below)</span>
+    <div class="card" style="max-width: 600px; margin: 0 auto;">
+      <div class="card-title" style="margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+        <span style="font-size:1.4rem;">🔄</span> Restock Product
+      </div>
+      
+      <!-- Selected Product Info Area -->
+      <div id="selected-product-info" style="display:none; margin-bottom:24px; padding:16px; background:rgba(14, 165, 233, 0.08); border:2px solid var(--accent); border-radius:var(--radius); animation: slideDown 0.3s ease-out;">
+         <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:12px;">
+               <div style="width:40px; height:40px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; color:white; font-size:1.2rem;">📦</div>
+               <div>
+                  <div id="selected-product-name" style="font-size:1.1rem; font-weight:800; color:var(--text);">No product selected</div>
+                  <div id="selected-product-stock" style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">Current Stock: --</div>
+               </div>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="clearRestockSelection()" style="border-radius:20px; padding:4px 12px; font-size:0.75rem;">Change Product</button>
+         </div>
+      </div>
+
+      <form hx-post="/inventory/restock" hx-target="#inv-content" hx-swap="innerHTML" id="restock-form">
+        <input type="hidden" name="product_id" id="hidden-product-id" required>
+        
+        <!-- Step 1: Search and Select -->
+        <div id="product-search-container" class="form-group" style="margin-bottom:24px;">
+          <label class="form-label" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <span>1. Search Product to Restock</span>
           </label>
-          <div style="position:relative; margin-bottom:10px;">
-            <input type="text" class="form-control" id="restock-search" 
-                   placeholder="🔍 Type product name to search..." 
-                   onkeyup="filterRestockList()"
-                   style="border-bottom-left-radius:0; border-bottom-right-radius:0;">
-            <select class="form-control" name="product_id" id="product-select" size="6" required
-                    style="border-top-left-radius:0; border-top-right-radius:0; height:auto;">
+          <div style="position:relative; border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; background:var(--surface2);">
+            <div style="display:flex; align-items:center; padding:0 12px; border-bottom:1px solid var(--border);">
+               <span style="opacity:0.5;">🔍</span>
+               <input type="text" class="form-control" id="restock-search" 
+                      placeholder="Type name or barcode..." 
+                      onkeyup="filterRestockList()"
+                      autocomplete="off"
+                      style="border:none; background:transparent; padding:12px 8px; margin-bottom:0; width:100%; box-shadow:none;">
+            </div>
+            <select class="form-control" id="product-select" size="6" 
+                    onchange="selectRestockProduct()"
+                    style="border:none; background:transparent; height:auto; padding:0; outline:none;">
               {options}
             </select>
           </div>
+          <p style="font-size:0.7rem; color:var(--text-muted); margin-top:8px;">Click on a product from the list above to proceed.</p>
         </div>
+
+        <!-- Step 2: Restock Details -->
+        <div id="restock-details" style="opacity:0.3; pointer-events:none; transition:all 0.4s ease;">
+            <div style="background:rgba(255,255,255,0.02); padding:16px; border-radius:var(--radius); border:1px dashed var(--border);">
+                <div class="form-group">
+                  <label class="form-label">2. Quantity to Add (pcs) *</label>
+                  <input class="form-control" id="restock-qty" name="qty" type="number" min="1" step="1" value="1" required 
+                         style="font-size:1.1rem; font-weight:700; padding:12px;"
+                         onkeydown="if(event.key==='.' || event.key==='e' || event.key==='-'){{event.preventDefault();}}">
+                  <small style="color: var(--text-muted); font-size:0.7rem; margin-top:4px; display:block;">Enter the number of units received from supplier.</small>
+                </div>
+                <div class="form-group" style="margin-bottom:20px;">
+                  <label class="form-label">3. Reason / Remarks</label>
+                  <input class="form-control" name="reason" value="Restock from supplier" style="padding:10px;">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full btn-xl">📥 Confirm & Add Stock</button>
+            </div>
+        </div>
+
         <script>
         function filterRestockList() {{
           const input = document.getElementById('restock-search');
@@ -961,21 +1244,73 @@ async def inv_restock_form(request: Request):
             const txt = options[i].textContent || options[i].innerText;
             const match = txt.toLowerCase().indexOf(filter) > -1;
             options[i].style.display = match ? "" : "none";
-            // Auto-select first match if it's high confidence but actually it's better to let user pick
           }}
         }}
+
+        function selectRestockProduct() {{
+          const select = document.getElementById('product-select');
+          const selectedOption = select.options[select.selectedIndex];
+          if(!selectedOption) return;
+
+          const pId = selectedOption.value;
+          const pNameStock = selectedOption.textContent;
+          
+          // Update hidden input
+          document.getElementById('hidden-product-id').value = pId;
+          
+          // Update display
+          document.getElementById('selected-product-name').textContent = pNameStock.split('(')[0].trim();
+          document.getElementById('selected-product-stock').textContent = 'Currently in inventory: ' + pNameStock.split('(')[1].replace(')', '').trim();
+          
+          // Visual transitions
+          document.getElementById('product-search-container').style.display = 'none';
+          document.getElementById('selected-product-info').style.display = 'block';
+          
+          // Enable restock details
+          const details = document.getElementById('restock-details');
+          details.style.opacity = '1';
+          details.style.pointerEvents = 'auto';
+          
+          // Focus quantity field
+          setTimeout(() => document.getElementById('restock-qty').focus(), 300);
+        }}
+
+        function clearRestockSelection() {{
+           document.getElementById('hidden-product-id').value = '';
+           document.getElementById('product-search-container').style.display = 'block';
+           document.getElementById('selected-product-info').style.display = 'none';
+           
+           const details = document.getElementById('restock-details');
+           details.style.opacity = '0.3';
+           details.style.pointerEvents = 'none';
+           
+           document.getElementById('restock-search').value = '';
+           filterRestockList(); 
+           setTimeout(() => document.getElementById('restock-search').focus(), 100);
+        }}
         </script>
-        <div class="form-group">
-          <label class="form-label">Quantity to Add (pcs) *</label>
-          <input class="form-control" name="qty" type="number" min="1" step="1" value="1" required 
-                 onkeydown="if(event.key==='.' || event.key==='e' || event.key==='-'){{event.preventDefault();}}">
-          <small style="color: #888;">Only whole numbers are allowed.</small>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Reason</label>
-          <input class="form-control" name="reason" value="Restock from supplier">
-        </div>
-        <button type="submit" class="btn btn-primary">📥 Restock</button>
+        <style>
+        @keyframes slideDown {{
+           from {{ opacity:0; transform:translateY(-15px); }}
+           to {{ opacity:1; transform:translateY(0); }}
+        }}
+        #product-select option {{
+           padding: 10px 12px;
+           border-bottom: 1px solid var(--border);
+           cursor: pointer;
+           font-weight: 500;
+        }}
+        #product-select option:hover {{
+           background: rgba(14, 165, 233, 0.1);
+        }}
+        #product-select::-webkit-scrollbar {{
+           width: 6px;
+        }}
+        #product-select::-webkit-scrollbar-thumb {{
+           background: rgba(255,255,255,0.1);
+           border-radius: 10px;
+        }}
+        </style>
       </form>
     </div>""")
 
@@ -1007,12 +1342,14 @@ async def inv_stock_alerts(request: Request):
 # ════════════════════════════════════════════════════════════════════════════
 
 @app.get("/customers/list", response_class=HTMLResponse)
-async def customers_list(request: Request):
+async def customers_list(request: Request, q: Optional[str] = None):
     token = _token(request)
     # The backend's customer endpoint may not exist; handle gracefully
     try:
         async with httpx.AsyncClient(base_url=BACKEND_URL, timeout=8.0) as client:
+            params = {"q": q} if q else {}
             resp = await client.get("/customers/",
+                                    params=params,
                                     headers={"Authorization": f"Bearer {token}"} if token else {})
             customers = resp.json() if resp.status_code == 200 else []
     except Exception:
@@ -1042,7 +1379,7 @@ async def customers_list(request: Request):
 
 @app.get("/customers/search", response_class=HTMLResponse)
 async def customers_search(request: Request, q: str = ""):
-    return await customers_list(request)
+    return await customers_list(request, q=q)
 
 
 @app.get("/customers/insights/{customer_id}", response_class=HTMLResponse)
