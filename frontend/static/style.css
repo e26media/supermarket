@@ -1351,7 +1351,7 @@ select.form-control option {
 /* Column header row */
 .cart-col-header {
   display: grid;
-  grid-template-columns: 40px 1fr 82px 60px 70px 24px;
+  grid-template-columns: 40px minmax(0, 1fr) 88px 75px 30px;
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
@@ -1377,8 +1377,8 @@ select.form-control option {
 /* Each cart row */
 .cart-row-item {
   display: grid;
-  grid-template-columns: 40px 1fr 82px 60px 70px 24px;
-  align-items: center;
+  grid-template-columns: 40px minmax(0, 1fr) 88px 75px 30px;
+  align-items: start;
   gap: 8px;
   padding: 8px 10px;
   border-bottom: 1px solid var(--border);
@@ -1413,14 +1413,22 @@ select.form-control option {
   object-fit: cover;
 }
 
+/* Product Info (Name + Meta) */
+.cart-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 /* Product name */
 .cart-name {
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.35;
 }
 
 .cart-index {
@@ -1433,9 +1441,7 @@ select.form-control option {
   font-size: 0.71rem;
   color: var(--text-muted);
   margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
 }
 
 /* Qty controls */
@@ -1444,6 +1450,7 @@ select.form-control option {
   align-items: center;
   gap: 3px;
   justify-content: center;
+  padding-top: 4px;
 }
 
 .qty-btn {
@@ -1506,6 +1513,7 @@ select.form-control option {
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--text);
+  padding-top: 4px;
 }
 
 /* Delete button */
@@ -1518,6 +1526,7 @@ select.form-control option {
   cursor: pointer;
   font-size: 0.82rem;
   padding: 2px;
+  padding-top: 4px;
   transition: color var(--transition);
   text-align: center;
 }

@@ -425,10 +425,11 @@ async def add_to_cart(request: Request, product_id: int):
     # Check if already in cart
     for item in cart["items"]:
         if item["product_id"] == product_id:
-            item["qty"] += 1
+            # Check stock before incrementing
+            if item["qty"] < item.get("stock_qty", 999):
+                item["qty"] += 1
             _recalc(cart)
-            return templates.TemplateResponse(request=request, name="partials/cart.html", context=_ctx(request, cart=cart["items"], cart_discount=cart["cart_discount"])
-            )
+            return templates.TemplateResponse(request=request, name="partials/cart.html", context=_ctx(request, cart=cart["items"], cart_discount=cart["cart_discount"]))
 
     cart["items"].append({
         "product_id": product_id,
@@ -436,6 +437,7 @@ async def add_to_cart(request: Request, product_id: int):
         "unit": product.get("unit", "pcs"),
         "unit_price": product["price"],
         "qty": 1,
+        "stock_qty": product.get("stock_qty", 0),
         "discount": product.get("discount", 0.0),
         "tax_rate": product.get("tax_rate", 0.0),
         "image_data": product.get("image_data"),
@@ -455,9 +457,14 @@ async def change_qty(request: Request, product_id: int,
     for item in cart["items"]:
         if item["product_id"] == product_id:
             step = 0.5 if float else 1
-            item["qty"] = max(0, item["qty"] + (step if delta > 0 else -step))
-            if item["qty"] == 0:
-                cart["items"].remove(item)
+            if delta > 0:
+                # Increment: check stock
+                if item["qty"] < item.get("stock_qty", 999):
+                    item["qty"] += step
+            else:
+                # Decrement: don't go below 1
+                if item["qty"] > 1:
+                    item["qty"] -= step
             break
     _recalc(cart)
     return templates.TemplateResponse(request=request, name="partials/cart.html", context=_ctx(request, cart=cart["items"], cart_discount=cart["cart_discount"])
@@ -618,6 +625,7 @@ async def modal_verify(request: Request,
              } for i in sale.get("items", [])],
              subtotal=sale["subtotal"],
              discount=sale["discount"],
+             discount_pct=sale.get("discount_pct", 0),
              tax=sale["tax"],
              total=sale["total"])
     )

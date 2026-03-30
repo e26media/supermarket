@@ -29,6 +29,7 @@ class Sale(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     subtotal = Column(Float, nullable=False)
     discount = Column(Float, default=0.0)
+    discount_pct = Column(Float, default=0.0)
     tax = Column(Float, default=0.0)
     total = Column(Float, nullable=False)
     payment_mode = Column(Enum(PaymentMode), default=PaymentMode.cash, nullable=False)

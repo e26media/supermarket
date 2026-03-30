@@ -86,6 +86,7 @@ class SalesService:
             user_id=user_id,
             subtotal=round(subtotal, 2),
             discount=round(cart_discount, 2),
+            discount_pct=round(data.discount, 2),
             tax=round(tax_total, 2),
             total=round(total, 2),
             payment_mode=data.payment_mode,

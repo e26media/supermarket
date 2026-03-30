@@ -41,6 +41,7 @@ class SaleResponse(BaseModel):
     user_id: int
     subtotal: float
     discount: float
+    discount_pct: float
     tax: float
     total: float
     payment_mode: str

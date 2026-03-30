@@ -43,7 +43,8 @@
       </div>
       {% if discount > 0 %}
       <div style="display:flex; justify-content:space-between; color:#f39c12;">
-        <span>Discount</span><span>−₹{{ discount | int }}</span>
+        <span>Discount {% if discount_pct > 0 %}({{ discount_pct | int }}%){% endif %}</span>
+        <span>−₹{{ discount | int }}</span>
       </div>
       {% endif %}
       {% if tax > 0 %}

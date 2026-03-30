@@ -52,7 +52,7 @@
       </div>
 
       <!-- Name + unit price + measure -->
-      <div>
+      <div class="cart-info">
         <div class="cart-name">
           <span class="cart-index">#{{ loop.index }}</span>
           {{ item.name }}
@@ -66,13 +66,15 @@
       <div class="cart-qty-wrap">
         <button class="qty-btn"
                 hx-patch="/pos/cart/qty/{{ item.product_id }}?delta=-1{% if is_float %}&float=1{% endif %}"
-                hx-target="#cart-section" hx-swap="innerHTML">−</button>
+                hx-target="#cart-section" hx-swap="innerHTML"
+                {% if item.qty <= 1 %}disabled style="opacity:0.4; cursor:not-allowed;"{% endif %}>−</button>
         <span class="cart-qty-val">
           {{ "%.1f"|format(item.qty) if is_float else item.qty|int }}
         </span>
         <button class="qty-btn"
                 hx-patch="/pos/cart/qty/{{ item.product_id }}?delta=1{% if is_float %}&float=1{% endif %}"
-                hx-target="#cart-section" hx-swap="innerHTML">+</button>
+                hx-target="#cart-section" hx-swap="innerHTML"
+                {% if item.qty >= item.stock_qty|default(999) %}disabled style="opacity:0.4; cursor:not-allowed;"{% endif %}>+</button>
       </div>
 
       <!-- Discount -->
@@ -113,19 +115,22 @@
     </div>
 
     <div class="cart-sum-row">
-      <span style="display:flex; align-items:center; gap:6px;">
-        Cart Discount
-        <input type="number"
-               value="{{ cart_discount|default(0)|int }}"
-               min="0" max="100"
-               class="cart-disc-input"
-               style="width:40px;"
-               hx-patch="/pos/cart/cart-discount"
-               hx-trigger="change"
-               hx-target="#cart-section" hx-swap="innerHTML"
-               name="discount">%
+      <span style="display:flex; align-items:center; gap:8px;">
+        🏷️ Cart Discount
+        <div style="display:flex; align-items:center; background:rgba(255,255,255,0.05); border-radius:4px; border:1px solid var(--border); padding-right:6px;">
+          <input type="number"
+                 value="{{ cart_discount|default(0)|int }}"
+                 min="0" max="100"
+                 class="cart-disc-input"
+                 style="width:42px; border:none; background:transparent;"
+                 hx-patch="/pos/cart/cart-discount"
+                 hx-trigger="change"
+                 hx-target="#cart-section" hx-swap="innerHTML"
+                 name="discount">
+          <span style="font-size:0.75rem; color:var(--text-muted); padding-left:2px;">%</span>
+        </div>
       </span>
-      <span style="color:#e94560;">−₹{{ disc_amt|int }}</span>
+      <span style="color:#f39c12; font-weight:600;">−₹{{ disc_amt|int }}</span>
     </div>
 
     <div class="cart-sum-row">

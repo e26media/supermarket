@@ -92,9 +92,8 @@ def _run_migrations():
         "ALTER TABLE subcategories DROP COLUMN IF EXISTS category_id;",
         "ALTER TABLE products ADD COLUMN IF NOT EXISTS subcategory_id INTEGER REFERENCES subcategories(id);",
         "ALTER TABLE products ADD COLUMN IF NOT EXISTS discount FLOAT DEFAULT 0.0;",
+        "ALTER TABLE sales ADD COLUMN IF NOT EXISTS discount_pct FLOAT DEFAULT 0.0;",
         # Add future migrations below this line ↓
-        # "ALTER TABLE products ADD COLUMN IF NOT EXISTS category TEXT;",
-        # "ALTER TABLE customers ADD COLUMN IF NOT EXISTS loyalty_points INT DEFAULT 0;",
     ]
 
     with engine.connect() as conn:
