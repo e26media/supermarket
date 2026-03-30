@@ -1,7 +1,7 @@
 <!-- Modal Step 1: Customer Details -->
 <div class="modal-backdrop" onclick="if(event.target===this)closeModal()">
   <div class="modal">
-    <div class="modal-title">💳 Complete Purchase</div>
+    <div class="modal-title"><i data-lucide="credit-card" style="width:22px; height:22px; vertical-align:middle; margin-right:8px; color:var(--accent);"></i>Complete Purchase</div>
     <div class="modal-step-indicator">
       <div class="modal-step-dot active"></div>
       <div class="modal-step-dot"></div>
@@ -22,8 +22,8 @@
 
       <div style="display:flex; gap:8px; margin-top:20px;">
         <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-        <button class="btn btn-primary" style="flex:1" onclick="handleNextClick(this)">
-          Next → Payment Method
+        <button class="btn btn-primary" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="handleNextClick(this)">
+          Next <i data-lucide="arrow-right" style="width:16px; height:16px;"></i>
         </button>
       </div>
     </div>

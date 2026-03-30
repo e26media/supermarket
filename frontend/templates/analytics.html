@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Analytics — Salethur Supermarket{% endblock %}
-{% block page_title %}📊 Analytics{% endblock %}
+{% block page_title %}<i data-lucide="bar-chart-2" style="vertical-align:middle; margin-right:8px;"></i>Analytics{% endblock %}
 
 {% block content %}
 <div>
@@ -20,7 +20,7 @@
   <!-- ── Range selector ─────────────────────────────────────── -->
   <div class="card" style="margin-bottom:16px;">
     <div class="card-header">
-      <div class="card-title">📈 Sales Overview</div>
+      <div class="card-title"><i data-lucide="trending-up" style="width:18px; height:18px; vertical-align:middle; margin-right:6px;"></i>Sales Overview</div>
       <div style="display:flex; gap:6px;">
         {% for r, label in [('week','This Week'),('month','This Month'),('year','This Year')] %}
         <button class="filter-tab range-btn {% if loop.first %}active{% endif %}"
@@ -47,7 +47,7 @@
       <!-- Top Selling -->
       <div class="card" style="margin-bottom:16px;">
         <div class="card-header">
-          <div class="card-title">🏆 Top Selling Products</div>
+          <div class="card-title"><i data-lucide="award" style="width:18px; height:18px; vertical-align:middle; margin-right:6px;"></i>Top Selling Products</div>
         </div>
         <div id="top-products"
              hx-get="/analytics/top-products"
@@ -60,7 +60,7 @@
       <!-- Least Selling -->
       <div class="card">
         <div class="card-header">
-          <div class="card-title">📉 Least Selling Products</div>
+          <div class="card-title"><i data-lucide="trending-down" style="width:18px; height:18px; vertical-align:middle; margin-right:6px;"></i>Least Selling Products</div>
         </div>
         <div id="least-products"
              hx-get="/analytics/least-products"
@@ -75,7 +75,7 @@
       <!-- Average Order Value -->
       <div class="card" style="margin-bottom:16px;">
         <div class="card-header">
-          <div class="card-title">💰 Average Order Value</div>
+          <div class="card-title"><i data-lucide="dollar-sign" style="width:18px; height:18px; vertical-align:middle; margin-right:6px;"></i>Average Order Value</div>
           <div style="display:flex; gap:6px;">
             {% for r, label in [('today','Today'),('week','Week'),('month','Month'),('year','Year')] %}
             <button class="filter-tab {% if loop.first %}active{% endif %}"
@@ -97,7 +97,7 @@
       <!-- Peak Hours -->
       <div class="card">
         <div class="card-header">
-          <div class="card-title">⏰ Peak Sales Hours</div>
+          <div class="card-title"><i data-lucide="clock" style="width:18px; height:18px; vertical-align:middle; margin-right:6px;"></i>Peak Sales Hours</div>
         </div>
         <div id="peak-hours"
              hx-get="/analytics/peak-hours"

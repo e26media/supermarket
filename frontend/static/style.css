@@ -40,7 +40,15 @@
   --radius: 12px;
   --radius-sm: 8px;
   --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  --transition: 0.18s ease;
+  --transition: 0.2s ease;
+}
+
+/* Lucide Icon Alignment */
+.lucide {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  stroke-width: 2px;
 }
 
 /* ── Light theme override ───────────────────────── */

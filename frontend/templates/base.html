@@ -12,9 +12,14 @@
     if (localStorage.getItem('theme') === 'light') document.documentElement.classList.add('light');
   </script>
   <script src="/static/htmx.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
   <script>
     // Inject API base from server
     window.API_BASE = "{{ api_base }}";
+
+    // Initialize Lucide icons on page load and after every HTMX swap
+    document.addEventListener("DOMContentLoaded", () => lucide.createIcons());
+    document.body.addEventListener("htmx:afterSwap", () => lucide.createIcons());
   </script>
 </head>
 
@@ -24,7 +29,7 @@
     <!-- ── Sidebar ─────────────────────────────────────────── -->
     <nav class="sidebar" id="sidebar">
       <div class="sidebar-brand">
-        <div class="brand-icon">🛒</div>
+        <div class="brand-icon"><i data-lucide="shopping-cart"></i></div>
         <div class="brand-name">Salethur Supermarket</div>
         <div class="brand-sub">POS + CRM System</div>
       </div>
@@ -41,25 +46,25 @@
 
       <a class="nav-item" data-page="pos" href="/app/pos" hx-get="/app/pos" hx-target=".main-area"
         hx-select=".main-area" hx-push-url="true">
-        <span class="nav-icon">🛒</span>
+        <span class="nav-icon"><i data-lucide="shopping-cart"></i></span>
         <span>Billing</span>
       </a>
 
       <a class="nav-item" data-page="analytics" data-role-required="admin" href="/app/analytics" hx-get="/app/analytics"
         hx-target=".main-area" hx-select=".main-area" hx-push-url="true">
-        <span class="nav-icon">📊</span>
+        <span class="nav-icon"><i data-lucide="bar-chart-3"></i></span>
         <span>Analytics</span>
       </a>
 
       <a class="nav-item" data-page="inventory" data-role-required="admin" href="/app/inventory" hx-get="/app/inventory"
         hx-target=".main-area" hx-select=".main-area" hx-push-url="true">
-        <span class="nav-icon">📦</span>
+        <span class="nav-icon"><i data-lucide="package"></i></span>
         <span>Inventory</span>
       </a>
 
       <a class="nav-item" data-page="customers" data-role-required="admin" href="/app/customers" hx-get="/app/customers"
         hx-target=".main-area" hx-select=".main-area" hx-push-url="true">
-        <span class="nav-icon">👥</span>
+        <span class="nav-icon"><i data-lucide="users"></i></span>
         <span>Customers</span>
       </a>
 
@@ -67,19 +72,19 @@
 
       <a class="nav-item" data-page="help" href="/app/help" hx-get="/app/help" hx-target=".main-area"
         hx-select=".main-area" hx-push-url="true">
-        <span class="nav-icon">❓</span>
+        <span class="nav-icon"><i data-lucide="help-circle"></i></span>
         <span>Help</span>
       </a>
 
       <a class="nav-item" data-page="settings" href="/app/settings" hx-get="/app/settings" hx-target=".main-area"
         hx-select=".main-area" hx-push-url="true">
-        <span class="nav-icon">⚙️</span>
+        <span class="nav-icon"><i data-lucide="settings"></i></span>
         <span>Settings</span>
       </a>
 
       <div class="sidebar-footer">
         <div class="nav-item" onclick="logout()">
-          <span class="nav-icon">🚪</span>
+          <span class="nav-icon"><i data-lucide="log-out"></i></span>
           <span>Logout</span>
         </div>
         <div style="font-size:0.65rem; color:var(--text-muted); opacity:0.5; text-align:center; padding-top:8px;">
@@ -97,7 +102,8 @@
         <div class="topbar-spacer"></div>
         <!-- Barcode field (always present in topbar for scan) -->
         {% block topbar_barcode %}{% endblock %}
-        <div class="topbar-action" onclick="showToast('Notifications coming soon', 'info')" title="Notifications">🔔
+        <div class="topbar-action" onclick="showToast('Notifications coming soon', 'info')" title="Notifications">
+          <i data-lucide="bell" style="width: 18px; height: 18px;"></i>
         </div>
       </header>
 

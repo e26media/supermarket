@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
 {% block title %}POS Billing — Salethur Supermarket{% endblock %}
-{% block page_title %}🛒 Billing Counter{% endblock %}
+{% block page_title %}<i data-lucide="shopping-cart" style="vertical-align: middle; margin-right: 8px;"></i>Billing Counter{% endblock %}
 
 {% block topbar_extra %}
 <div class="topbar-barcode-input" title="Barcode scanner — scan or type here">
-  <span>📷</span>
+  <i data-lucide="barcode" style="width: 18px; height: 18px; color: var(--text-muted);"></i>
   <input id="barcode-field" type="text" placeholder="Scan barcode…"
          autocomplete="off"
          onkeydown="if(event.key==='Enter'){processBarcode(this.value);this.value=''}">
@@ -20,7 +20,7 @@
 
     <!-- Filter tabs + search -->
     <div class="card" style="padding:12px 16px;">
-      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <div style="display:flex; flex-direction:column; gap:12px; align-items:flex-start;">
         <div class="filter-tabs" id="filter-tabs">
           <div class="filter-tab active" onclick="setFilterTab(this,'all')"
                hx-get="/pos/products?status=all"
@@ -40,16 +40,17 @@
                hx-indicator="#prod-spinner">Out of Stock</div>
         </div>
 
-        <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
-          <span class="htmx-indicator spinner" id="prod-spinner"></span>
-          <input type="search" class="form-control" style="width:200px;"
-                 placeholder="🔍 Search products…"
+        <div style="display:flex; align-items:center; gap:8px; background:rgba(0,0,0,0.05); padding:6px 12px; border-radius:var(--radius-sm); border:1px solid var(--border); width: 100%; max-width: 400px;">
+          <i data-lucide="search" style="width:16px; height:16px; color:var(--text-muted);"></i>
+          <input type="search" class="form-control" style="flex:1; border:none; background:transparent;"
+                 placeholder="Search products by name or category…"
                  name="q"
                  hx-get="/pos/search"
                  hx-trigger="keyup changed delay:300ms"
                  hx-target="#product-list"
                  hx-swap="innerHTML"
                  hx-indicator="#prod-spinner">
+          <span class="htmx-indicator spinner" id="prod-spinner"></span>
         </div>
       </div>
     </div>
@@ -69,7 +70,7 @@
     <!-- Recent Bills -->
     <div class="card" style="max-height:200px; overflow:hidden;">
       <div class="card-header">
-        <div class="card-title">🕐 Recent Bills</div>
+        <div class="card-title"><i data-lucide="clock" style="width:18px; height:18px; vertical-align:middle; margin-right:6px;"></i>Recent Bills</div>
         <span class="htmx-indicator spinner" id="bills-spinner"></span>
       </div>
       <div id="recent-bills"

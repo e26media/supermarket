@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Customers — Salethur Supermarket{% endblock %}
-{% block page_title %}👥 Customers{% endblock %}
+{% block page_title %}<i data-lucide="users" style="vertical-align:middle; margin-right:8px;"></i>Customers{% endblock %}
 
 {% block content %}
 <div class="customer-layout">
@@ -9,13 +9,16 @@
   <div class="card" style="display:flex; flex-direction:column; overflow:hidden;">
     <div class="card-header">
       <div class="card-title">Customer Directory</div>
-      <input type="search" class="form-control" style="width:220px;"
-             placeholder="🔍 Search name / phone…"
-             hx-get="/customers/search"
-             hx-trigger="keyup changed delay:300ms"
-             hx-target="#customer-table-body"
-             hx-swap="innerHTML"
-             name="q">
+      <div style="position:relative; display:flex; align-items:center;">
+        <i data-lucide="search" style="position:absolute; left:10px; width:14px; height:14px; color:var(--text-muted);"></i>
+        <input type="search" class="form-control" style="width:220px; padding-left:32px;"
+               placeholder="Search name / phone…"
+               hx-get="/customers/search"
+               hx-trigger="keyup changed delay:300ms"
+               hx-target="#customer-table-body"
+               hx-swap="innerHTML"
+               name="q">
+      </div>
     </div>
     <div style="overflow-y:auto; flex:1;">
       <table class="data-table">
@@ -46,8 +49,8 @@
   <div class="customer-insights">
     <div class="card">
       <div class="card-title" style="margin-bottom:12px;">Customer Insights</div>
-      <div id="customer-insights-content" style="color:var(--text-muted); font-size:0.83rem; text-align:center; padding:20px 0;">
-        <div style="font-size:2rem; margin-bottom:8px;">👆</div>
+      <div id="customer-insights-content" style="color:var(--text-muted); font-size:0.83rem; text-align:center; padding:20px 0; display:flex; flex-direction:column; align-items:center; gap:8px;">
+        <div style="font-size:2rem; color:var(--border);"><i data-lucide="mouse-pointer-2" style="width:32px; height:32px;"></i></div>
         Click a customer to view insights
       </div>
     </div>

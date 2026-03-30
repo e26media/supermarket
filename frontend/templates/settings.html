@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% block title %}Settings — Salethur Supermarket{% endblock %}
-{% block page_title %}⚙️ Settings{% endblock %}
+{% block page_title %}<i data-lucide="settings" style="vertical-align:middle; margin-right:8px;"></i>Settings{% endblock %}
 
 {% block content %}
 <div class="settings-grid">
 
   <!-- ── Appearance ─────────────────────────────── -->
   <div class="card">
-    <div class="card-title" style="margin-bottom:14px;">🎨 Appearance</div>
+    <div class="card-title" style="margin-bottom:14px;"><i data-lucide="palette" style="width:18px; height:18px; vertical-align:middle; margin-right:6px;"></i>Appearance</div>
 
     <div class="setting-item">
       <div>
@@ -28,7 +28,7 @@
 
   <!-- ── System ─────────────────────────────────── -->
   <div class="card">
-    <div class="card-title" style="margin-bottom:14px;">🖥️ System</div>
+    <div class="card-title" style="margin-bottom:14px;"><i data-lucide="monitor" style="width:18px; height:18px; vertical-align:middle; margin-right:6px;"></i>System</div>
 
     <div class="setting-item">
       <div>
@@ -47,8 +47,8 @@
         <div class="setting-label">API Health Check</div>
         <div class="setting-desc">Ping the backend server</div>
       </div>
-      <button class="btn btn-secondary btn-sm" hx-get="/settings/health" hx-target="#health-result" hx-swap="innerHTML">
-        🔍 Check
+      <button class="btn btn-secondary btn-sm" style="display:flex; align-items:center; gap:4px;" hx-get="/settings/health" hx-target="#health-result" hx-swap="innerHTML">
+        <i data-lucide="activity" style="width:14px; height:14px;"></i> Check
       </button>
     </div>
     <div id="health-result" style="font-size:0.78rem; color:var(--text-muted); padding-top:6px;"></div>
@@ -56,16 +56,16 @@
 
   <!-- ── Printer ────────────────────────────────── -->
   <div class="card">
-    <div class="card-title" style="margin-bottom:14px;">🖨️ Receipt Printer</div>
+    <div class="card-title" style="margin-bottom:14px;"><i data-lucide="printer" style="width:18px; height:18px; vertical-align:middle; margin-right:6px;"></i>Receipt Printer</div>
 
     <div class="setting-item">
       <div>
         <div class="setting-label">Test Print</div>
         <div class="setting-desc">Print a test receipt to verify connection</div>
       </div>
-      <button class="btn btn-secondary btn-sm" hx-post="/settings/test-print" hx-target="#print-result"
+      <button class="btn btn-secondary btn-sm" style="display:flex; align-items:center; gap:4px;" hx-post="/settings/test-print" hx-target="#print-result"
         hx-swap="innerHTML">
-        🖨️ Test
+        <i data-lucide="printer" style="width:14px; height:14px;"></i> Test
       </button>
     </div>
     <div id="print-result" style="font-size:0.78rem; color:var(--text-muted); padding-top:6px;"></div>
@@ -73,22 +73,22 @@
 
   <!-- ── Scale ──────────────────────────────────── -->
   <div class="card">
-    <div class="card-title" style="margin-bottom:14px;">⚖️ Digital Scale</div>
+    <div class="card-title" style="margin-bottom:14px;"><i data-lucide="scale" style="width:18px; height:18px; vertical-align:middle; margin-right:6px;"></i>Digital Scale</div>
 
     <div class="setting-item">
       <div>
         <div class="setting-label">Read Scale</div>
         <div class="setting-desc">Test weight reading from the scale</div>
       </div>
-      <button class="btn btn-secondary btn-sm" onclick="readScale()">
-        📡 Read
+      <button class="btn btn-secondary btn-sm" style="display:flex; align-items:center; gap:4px;" onclick="readScale()">
+        <i data-lucide="radio" style="width:14px; height:14px;"></i> Read
       </button>
     </div>
   </div>
 
   <!-- ── About ──────────────────────────────────── -->
   <div class="card">
-    <div class="card-title" style="margin-bottom:14px;">ℹ️ About</div>
+    <div class="card-title" style="margin-bottom:14px;"><i data-lucide="info" style="width:18px; height:18px; vertical-align:middle; margin-right:6px;"></i>About</div>
     <div style="font-size:0.82rem; color:var(--text-muted); line-height:2;">
       <div>App: <strong style="color:var(--text)">Salethur Supermarket POS</strong></div>
       <div>Version: <strong style="color:var(--text)">2.0.0 (HTMX)</strong></div>

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Help — Salethur Supermarket{% endblock %}
-{% block page_title %}❓ Help & Support{% endblock %}
+{% block page_title %}<i data-lucide="help-circle" style="vertical-align:middle; margin-right:8px;"></i>Help & Support{% endblock %}
 
 {% block content %}
 <div class="help-grid">
@@ -8,7 +8,7 @@
   <!-- ── FAQ ─────────────────────────────── -->
   <div class="card">
     <div class="card-header">
-      <div class="card-title">💬 Frequently Asked Questions</div>
+      <div class="card-title"><i data-lucide="message-circle" style="width:18px; height:18px; vertical-align:middle; margin-right:6px;"></i>Frequently Asked Questions</div>
     </div>
     {% for q, a in [
     ("How do I add a product to the cart?", "Scan the barcode with the scanner, or use the billing page search box to
@@ -19,7 +19,7 @@
     from supplier."),
     ("How do I apply a discount?", "Each cart item has a Disc% field. You can also apply an overall cart discount from
     the totals section."),
-    ("How do I print a receipt?", "After completing a sale, click the 🖨️ Print button in the receipt modal. Make sure
+    ("How do I print a receipt?", "After completing a sale, click the Print button in the receipt modal. Make sure
     the thermal printer is connected."),
     ("How do I view sales for a specific date?", "Navigate to Analytics and use the date range selector to filter by
     week, month, or year."),
@@ -39,22 +39,22 @@
   <div>
     <div class="card" style="margin-bottom:16px;">
       <div class="card-header">
-        <div class="card-title">📚 Guides & Tutorials</div>
+        <div class="card-title"><i data-lucide="book-open" style="width:18px; height:18px; vertical-align:middle; margin-right:6px;"></i>Guides & Tutorials</div>
       </div>
       <div style="display:flex; flex-direction:column; gap:10px;">
         {% for icon, title, desc in [
-        ("🎥", "Video: Getting Started", "5-minute walkthrough of the POS system"),
-        ("📄", "PDF: Full User Manual", "Complete reference guide — 28 pages"),
-        ("📋", "How-To: Inventory Management", "Adding, editing, restocking products"),
-        ("📋", "How-To: End of Day Report", "Print daily summary and close shift"),
-        ("📋", "How-To: Credit Management", "Managing customer credit and payments"),
+        ("video", "Video: Getting Started", "5-minute walkthrough of the POS system"),
+        ("file-text", "PDF: Full User Manual", "Complete reference guide — 28 pages"),
+        ("clipboard-list", "How-To: Inventory Management", "Adding, editing, restocking products"),
+        ("clipboard-list", "How-To: End of Day Report", "Print daily summary and close shift"),
+        ("clipboard-list", "How-To: Credit Management", "Managing customer credit and payments"),
         ] %}
         <div style="display:flex; align-items:center; gap:12px; padding:10px;
                     background:var(--surface2); border-radius:var(--radius-sm);
                     border:1px solid var(--border); cursor:pointer;
                     transition:border-color var(--transition);" onmouseover="this.style.borderColor='var(--accent)'"
           onmouseout="this.style.borderColor='var(--border)'" onclick="showToast('Coming soon', 'info')">
-          <span style="font-size:1.5rem;">{{ icon }}</span>
+          <span style="display:flex; align-items:center; justify-content:center; width:32px; height:32px; color:var(--accent);"><i data-lucide="{{ icon }}"></i></span>
           <div>
             <div style="font-size:0.85rem; font-weight:600; color:#000000;">{{ title }}</div>
             <div style="font-size:0.75rem; color:var(--text-muted);">{{ desc }}</div>
@@ -66,24 +66,24 @@
 
     <div class="card">
       <div class="card-header">
-        <div class="card-title">📞 Contact Support</div>
+        <div class="card-title"><i data-lucide="phone" style="width:18px; height:18px; vertical-align:middle; margin-right:6px;"></i>Contact Support</div>
       </div>
       <div style="display:flex; flex-direction:column; gap:10px; font-size:0.84rem;">
         <div style="display:flex; gap:10px; align-items:center;">
-          <span style="font-size:1.2rem;">📧</span>
+          <i data-lucide="mail" style="width:18px; height:18px; color:var(--text-muted);"></i>
           <span style="color:var(--text-muted);">support@e26supermarket.in</span>
         </div>
         <div style="display:flex; gap:10px; align-items:center;">
-          <span style="font-size:1.2rem;">📱</span>
+          <i data-lucide="smartphone" style="width:18px; height:18px; color:var(--text-muted);"></i>
           <span style="color:var(--text-muted);">+91 98765 43210</span>
         </div>
         <div style="display:flex; gap:10px; align-items:center;">
-          <span style="font-size:1.2rem;">🕐</span>
+          <i data-lucide="clock" style="width:18px; height:18px; color:var(--text-muted);"></i>
           <span style="color:var(--text-muted);">Mon – Sat, 9:00 AM – 6:00 PM</span>
         </div>
-        <button class="btn btn-primary" style="margin-top:8px;"
+    <button class="btn btn-primary" style="margin-top:8px; display:flex; align-items:center; gap:8px; justify-content:center;"
           onclick="showToast('Support request coming soon', 'info')">
-          📩 Submit a Request
+          <i data-lucide="send" style="width:16px; height:16px;"></i> Submit a Request
         </button>
       </div>
     </div>
@@ -94,21 +94,21 @@
 <!-- Troubleshooting -->
 <div class="card" style="margin-top:16px;">
   <div class="card-header">
-    <div class="card-title">🔧 Troubleshooting</div>
+    <div class="card-title"><i data-lucide="wrench" style="width:18px; height:18px; vertical-align:middle; margin-right:6px;"></i>Troubleshooting</div>
   </div>
   <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:12px;">
     {% for icon, title, steps in [
-    ("🖨️", "Printer not working", ["Check USB connection", "Ensure printer is powered on", "Restart the POS system"]),
-    ("⚖️", "Scale not responding", ["Check serial/USB connection", "Verify COM port in settings", "Try restarting the
+    ("printer", "Printer not working", ["Check USB connection", "Ensure printer is powered on", "Restart the POS system"]),
+    ("scale", "Scale not responding", ["Check serial/USB connection", "Verify COM port in settings", "Try restarting the
     scale"]),
-    ("🌐", "Backend unreachable", ["Check internet / network", "Verify BACKEND_URL in .env", "Ensure the API server is
+    ("globe", "Backend unreachable", ["Check internet / network", "Verify BACKEND_URL in .env", "Ensure the API server is
     running"]),
-    ("💳", "Card payment failing", ["Check Pine Labs terminal power", "Verify network connection on terminal", "Try
+    ("credit-card", "Card payment failing", ["Check Pine Labs terminal power", "Verify network connection on terminal", "Try
     again or switch to cash"]),
     ] %}
     <div
       style="background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px;">
-      <div style="font-size:1.3rem; margin-bottom:6px;">{{ icon }}</div>
+      <div style="color:var(--accent); margin-bottom:10px;"><i data-lucide="{{ icon }}" style="width:28px; height:28px;"></i></div>
       <div style="font-size:0.85rem; font-weight:600; color:#fff; margin-bottom:8px;">{{ title }}</div>
       <ol style="font-size:0.78rem; color:var(--text-muted); padding-left:16px; line-height:1.8;">
         {% for step in steps %}<li>{{ step }}</li>{% endfor %}

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Inventory — Salethur Supermarket{% endblock %}
-{% block page_title %}📦 Inventory{% endblock %}
+{% block page_title %}<i data-lucide="package" style="vertical-align:middle; margin-right:8px;"></i>Inventory{% endblock %}
 
 {% block content %}
 <div>
@@ -10,31 +10,31 @@
          hx-get="/inventory/products"
          hx-target="#inv-content"
          hx-swap="innerHTML">
-      📋 Product List
+      <i data-lucide="list" style="width:16px; height:16px; vertical-align:middle; margin-right:6px;"></i>Product List
     </div>
     <div class="inv-tab" id="tab-add" onclick="switchInvTab(this)"
          hx-get="/inventory/add-form"
          hx-target="#inv-content"
          hx-swap="innerHTML">
-      ➕ Add Product
+      <i data-lucide="plus-circle" style="width:16px; height:16px; vertical-align:middle; margin-right:6px;"></i>Add Product
     </div>
     <div class="inv-tab" id="tab-restock" onclick="switchInvTab(this)"
          hx-get="/inventory/restock-form"
          hx-target="#inv-content"
          hx-swap="innerHTML">
-      🔄 Restock
+      <i data-lucide="refresh-cw" style="width:16px; height:16px; vertical-align:middle; margin-right:6px;"></i>Restock
     </div>
     <div class="inv-tab" id="tab-alerts" onclick="switchInvTab(this)"
          hx-get="/inventory/stock-alerts"
          hx-target="#inv-content"
          hx-swap="innerHTML">
-      ⚠️ Stock Alerts
+      <i data-lucide="alert-triangle" style="width:16px; height:16px; vertical-align:middle; margin-right:6px;"></i>Stock Alerts
     </div>
     <div class="inv-tab" id="tab-categories" onclick="switchInvTab(this)"
          hx-get="/inventory/categories"
          hx-target="#inv-content"
          hx-swap="innerHTML">
-      🗂 Categories
+      <i data-lucide="folder-tree" style="width:16px; height:16px; vertical-align:middle; margin-right:6px;"></i>Categories
     </div>
   </div>
 

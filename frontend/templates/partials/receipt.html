@@ -1,7 +1,7 @@
 <!-- Modal Step 4: Receipt -->
 <div class="modal-backdrop">
   <div class="modal" style="max-width:480px;" id="receipt-modal">
-    <div class="modal-title" style="text-align:center;">🧾 Sale Complete!</div>
+    <div class="modal-title" style="text-align:center;"><i data-lucide="check-circle" style="width:24px; height:24px; vertical-align:middle; margin-right:8px; color:var(--accent);"></i>Sale Complete!</div>
     <div class="modal-step-indicator">
       <div class="modal-step-dot active"></div>
       <div class="modal-step-dot active"></div>
@@ -69,10 +69,10 @@
     </div>
 
     <div style="display:flex; gap:8px;">
-      <button class="btn btn-secondary" onclick="window.print()">🖨️ Print</button>
-      <button class="btn btn-primary" style="flex:1"
+      <button class="btn btn-secondary" style="display:flex; align-items:center; gap:6px;" onclick="window.print()"><i data-lucide="printer" style="width:16px; height:16px;"></i> Print</button>
+      <button class="btn btn-primary" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px;"
               onclick="closeModal(); htmx.ajax('GET','/pos/cart',{target:'#cart-section',swap:'innerHTML'})">
-        ✅ Done — New Sale
+        <i data-lucide="check" style="width:18px; height:18px;"></i> Done — New Sale
       </button>
     </div>
   </div>

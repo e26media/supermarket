@@ -4,7 +4,7 @@
   <!-- Header -->
   <div class="card-header" style="padding-bottom:10px; border-bottom:1px solid var(--border); margin-bottom:0;">
     <div class="card-title">
-      🧾 Cart
+      <i data-lucide="shopping-cart" style="width:18px; height:18px; vertical-align:middle; margin-right:6px;"></i>Cart
       {% if cart %}
       <span style="font-size:0.72rem; font-weight:400; color:var(--text-muted); margin-left:6px;">
         {{ cart|length }} item(s)
@@ -12,9 +12,9 @@
       {% endif %}
     </div>
     {% if cart %}
-    <button class="btn btn-danger btn-sm" hx-delete="/pos/cart" hx-target="#cart-section" hx-swap="innerHTML"
+    <button class="btn btn-danger btn-sm" style="display:flex; align-items:center; gap:4px;" hx-delete="/pos/cart" hx-target="#cart-section" hx-swap="innerHTML"
       hx-confirm="Clear entire cart?">
-      🗑️ Clear
+      <i data-lucide="trash-2" style="width:14px; height:14px;"></i> Clear
     </button>
     {% endif %}
   </div>
@@ -44,7 +44,7 @@
         {% if item.image_data %}
         <img src="data:image/jpeg;base64,{{ item.image_data }}" alt="{{ item.name }}">
         {% else %}
-        🛒
+        <i data-lucide="package" style="width:20px; height:20px; color:var(--text-muted);"></i>
         {% endif %}
       </div>
 
@@ -90,7 +90,7 @@
 
       <!-- Delete -->
       <button class="cart-del" hx-delete="/pos/cart/item/{{ item.product_id }}" hx-target="#cart-section"
-        hx-swap="innerHTML" title="Remove">✕</button>
+        hx-swap="innerHTML" title="Remove"><i data-lucide="x" style="width:14px; height:14px;"></i></button>
 
     </div>
     {% endfor %}
@@ -135,8 +135,8 @@
       <span>₹{{ "%.2f"|format(grand) }}</span>
     </div>
 
-    <button class="btn btn-primary btn-full btn-xl" style="margin-top:12px;" onclick="openPaymentModal()">
-      💳 Complete Purchase
+    <button class="btn btn-primary btn-full btn-xl" style="margin-top:12px; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="openPaymentModal()">
+      <i data-lucide="credit-card"></i> Complete Purchase
     </button>
 
   </div>
@@ -145,7 +145,7 @@
 
   <!-- Empty state -->
   <div class="cart-empty">
-    <div style="font-size:2.8rem;">🛒</div>
+    <div style="font-size:2.8rem; color:var(--border);"><i data-lucide="shopping-cart" style="width:64px; height:64px;"></i></div>
     <div style="font-weight:600; font-size:0.9rem;">Cart is empty</div>
     <div style="font-size:0.78rem; color:var(--text-muted); text-align:center;">
       Scan a barcode or click<br>a product to add it

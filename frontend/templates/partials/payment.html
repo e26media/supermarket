@@ -1,7 +1,7 @@
 <!-- Modal Step 2: Payment Method -->
 <div class="modal-backdrop" onclick="if(event.target===this)closeModal()">
   <div class="modal">
-    <div class="modal-title">💳 Select Payment Method</div>
+    <div class="modal-title"><i data-lucide="credit-card" style="width:22px; height:22px; vertical-align:middle; margin-right:8px; color:var(--accent);"></i>Select Payment Method</div>
     <div class="modal-step-indicator">
       <div class="modal-step-dot active"></div>
       <div class="modal-step-dot active"></div>
@@ -17,10 +17,10 @@
     <!-- Payment method picker -->
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;" id="pay-methods">
       {% for method, label, icon in [
-          ('cash',   'Cash',       '💵'),
-          ('upi',    'UPI',        '📱'),
-          ('card',   'Card (Pine Labs)', '💳'),
-          ('credit', 'Credit',     '🤝'),
+          ('cash',   'Cash',       'banknote'),
+          ('upi',    'UPI',        'smartphone'),
+          ('card',   'Card (Pine Labs)', 'credit-card'),
+          ('credit', 'Credit',     'handshake'),
       ] %}
       <label style="display:flex; align-items:center; gap:8px; padding:12px;
                     background:rgba(255,255,255,0.04); border:1px solid var(--border);
@@ -29,20 +29,20 @@
              onclick="selectPayMethod(this, '{{ method }}')">
         <input type="radio" name="payment_mode" value="{{ method }}"
                style="accent-color:var(--accent);" {% if loop.first %}checked{% endif %}>
-        <span style="font-size:1.1rem;">{{ icon }}</span>
+        <span style="font-size:1.1rem; color:var(--accent);"><i data-lucide="{{ icon }}"></i></span>
         <span style="font-size:0.83rem; font-weight:500;">{{ label }}</span>
       </label>
       {% endfor %}
     </div>
 
     <div style="display:flex; gap:8px;">
-      <button class="btn btn-secondary"
+      <button class="btn btn-secondary" style="display:flex; align-items:center; gap:6px;"
               hx-get="/pos/modal/customer"
               hx-target="#modal-container"
-              hx-swap="innerHTML">← Back</button>
-      <button id="pay-confirm-btn" class="btn btn-primary" style="flex:1"
+              hx-swap="innerHTML"><i data-lucide="arrow-left" style="width:16px; height:16px;"></i> Back</button>
+      <button id="pay-confirm-btn" class="btn btn-primary" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px;"
               onclick="submitPayment(this, '{{ cust_name }}', '{{ cust_phone }}', {{ grand_total }})">
-        ✅ Confirm &amp; Pay ₹{{ grand_total | int }}
+        <i data-lucide="check-circle" style="width:18px; height:18px;"></i> Confirm &amp; Pay ₹{{ grand_total | int }}
       </button>
     </div>
   </div>
