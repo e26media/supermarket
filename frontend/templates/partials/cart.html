@@ -6,17 +6,14 @@
     <div class="card-title">
       🧾 Cart
       {% if cart %}
-        <span style="font-size:0.72rem; font-weight:400; color:var(--text-muted); margin-left:6px;">
-          {{ cart|length }} item(s)
-        </span>
+      <span style="font-size:0.72rem; font-weight:400; color:var(--text-muted); margin-left:6px;">
+        {{ cart|length }} item(s)
+      </span>
       {% endif %}
     </div>
     {% if cart %}
-    <button class="btn btn-danger btn-sm"
-            hx-delete="/pos/cart"
-            hx-target="#cart-section"
-            hx-swap="innerHTML"
-            hx-confirm="Clear entire cart?">
+    <button class="btn btn-danger btn-sm" hx-delete="/pos/cart" hx-target="#cart-section" hx-swap="innerHTML"
+      hx-confirm="Clear entire cart?">
       🗑️ Clear
     </button>
     {% endif %}
@@ -45,9 +42,9 @@
       <!-- Image -->
       <div class="cart-img">
         {% if item.image_data %}
-          <img src="data:image/jpeg;base64,{{ item.image_data }}" alt="{{ item.name }}">
+        <img src="data:image/jpeg;base64,{{ item.image_data }}" alt="{{ item.name }}">
         {% else %}
-          🛒
+        🛒
         {% endif %}
       </div>
 
@@ -58,23 +55,23 @@
           {{ item.name }}
         </div>
         <div class="cart-meta">
-          ₹{{ item.unit_price|int }} / {{ item.unit }}
+          ₹{{ "%.2f"|format(item.unit_price) }} / {{ item.unit }}
         </div>
       </div>
 
       <!-- Qty controls -->
       <div class="cart-qty-wrap">
         <button class="qty-btn"
-                hx-patch="/pos/cart/qty/{{ item.product_id }}?delta=-1{% if is_float %}&float=1{% endif %}"
-                hx-target="#cart-section" hx-swap="innerHTML"
-                {% if item.qty <= 1 %}disabled style="opacity:0.4; cursor:not-allowed;"{% endif %}>−</button>
+          hx-patch="/pos/cart/qty/{{ item.product_id }}?delta=-1{% if is_float %}&float=1{% endif %}"
+          hx-target="#cart-section" hx-swap="innerHTML" {% if item.qty <=1 %}disabled
+          style="opacity:0.4; cursor:not-allowed;" {% endif %}>−</button>
         <span class="cart-qty-val">
-          {{ "%.1f"|format(item.qty) if is_float else item.qty|int }}
+          {{ "%.2f"|format(item.qty) if is_float else item.qty|int }}
         </span>
         <button class="qty-btn"
-                hx-patch="/pos/cart/qty/{{ item.product_id }}?delta=1{% if is_float %}&float=1{% endif %}"
-                hx-target="#cart-section" hx-swap="innerHTML"
-                {% if item.qty >= item.stock_qty|default(999) %}disabled style="opacity:0.4; cursor:not-allowed;"{% endif %}>+</button>
+          hx-patch="/pos/cart/qty/{{ item.product_id }}?delta=1{% if is_float %}&float=1{% endif %}"
+          hx-target="#cart-section" hx-swap="innerHTML" {% if item.qty>= item.stock_qty|default(999) %}disabled
+          style="opacity:0.4; cursor:not-allowed;"{% endif %}>+</button>
       </div>
 
       <!-- Discount -->
@@ -89,65 +86,56 @@
       </div> -->
 
       <!-- Line total -->
-      <div class="cart-line-total">₹{{ line_total|int }}</div>
+      <div class="cart-line-total">₹{{ "%.2f"|format(line_total) }}</div>
 
       <!-- Delete -->
-      <button class="cart-del"
-              hx-delete="/pos/cart/item/{{ item.product_id }}"
-              hx-target="#cart-section" hx-swap="innerHTML"
-              title="Remove">✕</button>
+      <button class="cart-del" hx-delete="/pos/cart/item/{{ item.product_id }}" hx-target="#cart-section"
+        hx-swap="innerHTML" title="Remove">✕</button>
 
     </div>
     {% endfor %}
   </div>
 
   <!-- Cart Summary -->
-  {% set subtotal   = cart|sum(attribute='subtotal') %}
-  {% set total_tax  = cart|sum(attribute='tax') %}
-  {% set disc_amt   = (subtotal + total_tax) * (cart_discount / 100) %}
-  {% set grand      = subtotal + total_tax - disc_amt %}
+  {% set subtotal = cart|sum(attribute='subtotal') %}
+  {% set total_tax = cart|sum(attribute='tax') %}
+  {% set disc_amt = (subtotal + total_tax) * (cart_discount / 100) %}
+  {% set grand = subtotal + total_tax - disc_amt %}
 
   <div class="cart-summary">
 
     <div class="cart-sum-row">
       <span>Subtotal</span>
-      <span>₹{{ subtotal|int }}</span>
+      <span>₹{{ "%.2f"|format(subtotal) }}</span>
     </div>
 
     <div class="cart-sum-row">
       <span style="display:flex; align-items:center; gap:8px;">
-        🏷️ Cart Discount
-        <div style="display:flex; align-items:center; background:rgba(255,255,255,0.05); border-radius:4px; border:1px solid var(--border); padding-right:6px;">
-          <input type="number"
-                 value="{{ cart_discount|default(0)|int }}"
-                 min="0" max="100"
-                 class="cart-disc-input"
-                 style="width:42px; border:none; background:transparent;"
-                 hx-patch="/pos/cart/cart-discount"
-                 hx-trigger="change"
-                 hx-target="#cart-section" hx-swap="innerHTML"
-                 name="discount">
+        Cart Discount
+        <div
+          style="display:flex; align-items:center; background:rgba(255,255,255,0.05); border-radius:4px; border:1px solid var(--border); padding-right:6px;">
+          <input type="number" value="{{ cart_discount|default(0)|int }}" min="0" max="100" class="cart-disc-input"
+            style="width:42px; border:none; background:transparent;" hx-patch="/pos/cart/cart-discount"
+            hx-trigger="change" hx-target="#cart-section" hx-swap="innerHTML" name="discount">
           <span style="font-size:0.75rem; color:var(--text-muted); padding-left:2px;">%</span>
         </div>
       </span>
-      <span style="color:#f39c12; font-weight:600;">−₹{{ disc_amt|int }}</span>
+      <span style="color:#f39c12; font-weight:600;">−₹{{ "%.2f"|format(disc_amt) }}</span>
     </div>
 
     <div class="cart-sum-row">
       <span>Total Tax</span>
-      <span style="color:var(--text-muted);">₹{{ total_tax|int }}</span>
+      <span style="color:var(--text-muted);">₹{{ "%.2f"|format(total_tax) }}</span>
     </div>
 
     <div class="cart-sum-divider"></div>
 
     <div class="cart-sum-row cart-grand-total">
       <span>Grand Total</span>
-      <span>₹{{ grand|int }}</span>
+      <span>₹{{ "%.2f"|format(grand) }}</span>
     </div>
 
-    <button class="btn btn-primary btn-full btn-xl"
-            style="margin-top:12px;"
-            onclick="openPaymentModal()">
+    <button class="btn btn-primary btn-full btn-xl" style="margin-top:12px;" onclick="openPaymentModal()">
       💳 Complete Purchase
     </button>
 
