@@ -19,7 +19,7 @@
 
     // Initialize Lucide icons on page load and after every HTMX swap
     document.addEventListener("DOMContentLoaded", () => lucide.createIcons());
-    document.body.addEventListener("htmx:afterSwap", () => lucide.createIcons());
+    document.addEventListener("htmx:afterSwap", () => lucide.createIcons());
   </script>
 </head>
 
