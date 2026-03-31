@@ -146,3 +146,36 @@ class DashboardService:
         )
         return [{"month": int(r.month), "revenue": round(r.revenue, 2), "transactions": r.transactions}
                 for r in results]
+
+    @staticmethod
+    def daily_revenue(db: Session, days: int = 7) -> list:
+        start_date = date.today() - timedelta(days=days - 1)
+        start_dt = datetime.combine(start_date, datetime.min.time())
+        
+        # SQLite uses date() function
+        results = (
+            db.query(
+                func.date(Sale.created_at).label("day"),
+                func.sum(Sale.total).label("revenue"),
+                func.count(Sale.id).label("transactions"),
+            )
+            .filter(
+                Sale.created_at >= start_dt,
+                Sale.payment_status != PaymentStatus.failed,
+            )
+            .group_by("day")
+            .order_by("day")
+            .all()
+        )
+        
+        data_map = {str(r.day): {"revenue": round(float(r.revenue), 2), "transactions": r.transactions} for r in results}
+        
+        full_data = []
+        for i in range(days):
+            d = start_date + timedelta(days=i)
+            d_str = d.strftime("%Y-%m-%d")
+            if d_str in data_map:
+                full_data.append({"date": d_str, **data_map[d_str]})
+            else:
+                full_data.append({"date": d_str, "revenue": 0.0, "transactions": 0})
+        return full_data

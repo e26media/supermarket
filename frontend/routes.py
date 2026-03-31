@@ -663,30 +663,64 @@ async def analytics_summary(request: Request):
 @app.get("/analytics/sales", response_class=HTMLResponse)
 async def analytics_sales(request: Request, range: str = "week"):
     token = _token(request)
-    resp = await _api("get", "/dashboard/monthly-revenue", token=token)
-    monthly = resp["data"] or []
-    months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
     
-    if not monthly:
-        return HTMLResponse("<div style='color:var(--text-muted);padding:20px;text-align:center;'>No sales data available yet.</div>")
+    if range == "year":
+        resp = await _api("get", "/dashboard/monthly-revenue", token=token)
+        data = resp["data"] or []
+        months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+        
+        if not data:
+            return HTMLResponse("<div style='color:var(--text-muted);padding:20px;text-align:center;'>No sales data available yet for this year.</div>")
 
-    max_rev = max((m.get("revenue", 0) for m in monthly), default=1) or 1
-    bars = []
-    for m in monthly[::-1][:12 if range=="year" else (4 if range=="month" else 7)]:
-        mo = m.get("month", 1)
-        rev = m.get("revenue", 0)
-        pct = max(4, int((rev / max_rev) * 100))
-        label = months[int(mo) - 1]
-        bars.append(f"""
-        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:32px;">
-          <div style="font-size:0.72rem;color:var(--text-muted);">₹{int(rev//1000)}k</div>
-          <div style="width:100%;background:var(--accent);border-radius:4px 4px 0 0;height:{pct}%;min-height:4px;
-                      transition:height 0.4s cubic-bezier(0.19,1,0.22,1);"></div>
-          <div style="font-size:0.7rem;color:var(--text-muted);">{label}</div>
-        </div>""")
+        max_rev = max((m.get("revenue", 0) for m in data), default=1) or 1
+        bars = []
+        # Sort by month and take up to 12
+        for m in sorted(data, key=lambda x: x.get("month", 0)):
+            mo = m.get("month", 1)
+            rev = m.get("revenue", 0)
+            pct = max(4, int((rev / max_rev) * 100))
+            label = months[int(mo) - 1]
+            val_str = f"₹{int(rev//1000)}k" if rev >= 1000 else f"₹{int(rev)}"
+            bars.append(f"""
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:32px;">
+              <div style="font-size:0.65rem;color:var(--text-muted);">{val_str}</div>
+              <div style="width:100%;background:var(--accent);border-radius:4px 4px 0 0;height:{pct}%;min-height:4px;
+                          transition:height 0.4s cubic-bezier(0.19,1,0.22,1);"></div>
+              <div style="font-size:0.7rem;color:var(--text-muted);">{label}</div>
+            </div>""")
+    else:
+        # Week or Month -> daily data
+        days = 7 if range == "week" else 30
+        resp = await _api("get", f"/dashboard/daily-revenue?days={days}", token=token)
+        data = resp["data"] or []
+        
+        if not data:
+            return HTMLResponse(f"<div style='color:var(--text-muted);padding:20px;text-align:center;'>No sales data available for the last {days} days.</div>")
+
+        max_rev = max((d.get("revenue", 0) for d in data), default=1) or 1
+        bars = []
+        for d in data:
+            date_obj = datetime.strptime(d["date"], "%Y-%m-%d")
+            # For week, use day name (Mon, Tue). For month, use date (Mar 25).
+            if range == "week":
+                label = date_obj.strftime("%a")
+            else:
+                label = date_obj.strftime("%b %d")
+            
+            rev = d.get("revenue", 0)
+            pct = max(4, int((rev / max_rev) * 100))
+            val_str = f"₹{int(rev//1000)}k" if rev >= 1000 else f"₹{int(rev)}"
+            
+            bars.append(f"""
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:28px;">
+              <div style="font-size:0.6rem;color:var(--text-muted);">{val_str}</div>
+              <div style="width:100%;background:var(--accent);border-radius:4px 4px 0 0;height:{pct}%;min-height:4px;
+                          transition:height 0.4s cubic-bezier(0.19,1,0.22,1);"></div>
+              <div style="font-size:0.65rem;color:var(--text-muted);">{label}</div>
+            </div>""")
     
     chart_html = f"""
-    <div style="display:flex;align-items:flex-end;gap:6px;height:220px;padding:12px 8px;">
+    <div style="display:flex;align-items:flex-end;gap:6px;height:220px;padding:12px 8px;overflow-x:auto;">
       {''.join(bars)}
     </div>"""
     return HTMLResponse(chart_html)
@@ -1369,8 +1403,12 @@ async def customers_list(request: Request, q: Optional[str] = None):
     
     rows = ""
     for i, c in enumerate(customers):
+        cust_id = c.get('id', 0)
         rows += f"""
-        <tr onclick="loadCustomerInsights({c.get('id', 0)})" style="cursor:pointer;">
+        <tr hx-get="/customers/insights/{cust_id}"
+            hx-target="#customer-insights-content"
+            hx-swap="innerHTML"
+            style="cursor:pointer;">
           <td>{i+1}</td>
           <td><strong>{c.get('name','—')}</strong></td>
           <td>{c.get('phone','—')}</td>
@@ -1378,7 +1416,8 @@ async def customers_list(request: Request, q: Optional[str] = None):
           <td>₹{int(c.get('total_spending', 0)):,}</td>
           <td>{c.get('last_purchase','—')}</td>
           <td><button class="btn btn-secondary btn-sm"
-                      onclick="loadCustomerInsights({c.get('id',0)});event.stopPropagation()">
+                      hx-get="/customers/insights/{cust_id}"
+                      hx-target="#customer-insights-content">
             View
           </button></td>
         </tr>"""
@@ -1392,25 +1431,67 @@ async def customers_search(request: Request, q: str = ""):
 
 @app.get("/customers/insights/{customer_id}", response_class=HTMLResponse)
 async def customer_insights(request: Request, customer_id: int):
+    token = _token(request)
+    resp = await _api("get", f"/customers/{customer_id}/insights", token=token)
+    data = resp["data"]
+    
+    if resp["error"] or not data:
+        err = resp["error"] or "Customer not found"
+        logger.error(f"Customer insights error for {customer_id}: {err}")
+        return HTMLResponse(f'<div style="color:var(--accent); padding:20px; text-align:center;">❌ {err}</div>')
+    
+    logger.info(f"Loaded insights for customer {customer_id}")
+
+    # Build top products list if they exist
+    top_products_html = ""
+    if data.get("top_products"):
+        items_html = "".join([f"""
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.8rem;">
+                <span style="color:var(--text); font-weight:500;">{p['name']}</span>
+                <span style="color:var(--accent); font-weight:700;">{int(p['qty'])} sold</span>
+            </div>
+        """ for p in data["top_products"]])
+        
+        top_products_html = f"""
+        <div style="margin-top:20px; text-align:left; width:100%;">
+            <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:4px;">
+                Highest Purchased Products
+            </div>
+            {items_html}
+        </div>
+        """
+    else:
+        top_products_html = '<div style="margin-top:20px; color:var(--text-muted); font-size:0.75rem;">No purchase history found</div>'
+
     return HTMLResponse(f"""
     <div style="text-align:center; padding:12px 0;">
       <div style="font-size:2rem; margin-bottom:8px;">👤</div>
-      <div style="font-size:0.85rem; font-weight:600; color:#fff; margin-bottom:16px;">
-        Customer #{customer_id}
+      <div style="font-size:1rem; font-weight:700; color:#fff; margin-bottom:4px;">
+        {data.get('name', 'Unknown')}
+      </div>
+      <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:16px;">
+        {data.get('phone', 'No Phone')}
       </div>
     </div>
-    <div class="kpi-card" style="margin-bottom:8px;">
-      <div class="kpi-label">Total Orders</div>
-      <div class="kpi-value" style="font-size:1.6rem;">—</div>
+    
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+        <div class="kpi-card" style="padding:12px;">
+          <div class="kpi-label" style="font-size:0.65rem;">Total Orders</div>
+          <div class="kpi-value" style="font-size:1.4rem;">{data.get('total_orders', 0)}</div>
+        </div>
+        <div class="kpi-card" style="padding:12px;">
+          <div class="kpi-label" style="font-size:0.65rem;">Total Spending</div>
+          <div class="kpi-value" style="font-size:1.4rem;">₹{int(data.get('total_spending', 0)):,}</div>
+        </div>
     </div>
-    <div class="kpi-card" style="margin-bottom:8px;">
-      <div class="kpi-label">Total Spent</div>
-      <div class="kpi-value" style="font-size:1.6rem;">—</div>
+    
+    <div class="kpi-card" style="padding:12px; margin-bottom:20px;">
+      <div class="kpi-label" style="font-size:0.65rem;">Last Purchase</div>
+      <div class="kpi-value" style="font-size:1.1rem;">{data.get('last_purchase', 'Never')}</div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Last Purchase</div>
-      <div class="kpi-value" style="font-size:1.2rem;">—</div>
-    </div>""")
+    
+    {top_products_html}
+    """)
 
 
 # ════════════════════════════════════════════════════════════════════════════

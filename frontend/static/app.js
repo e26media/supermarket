@@ -279,3 +279,11 @@ function readScale() {
       }
     });
 }
+
+function loadCustomerInsights(customerId) {
+  console.log('Fetching insights for customer:', customerId);
+  htmx.ajax('GET', '/customers/insights/' + customerId, {
+    target: '#customer-insights-content',
+    swap: 'innerHTML'
+  });
+}

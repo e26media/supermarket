@@ -49,3 +49,12 @@ def monthly_revenue(
     _: User = Depends(require_admin),
 ):
     return DashboardService.monthly_revenue(db, year)
+
+
+@router.get("/daily-revenue")
+def daily_revenue(
+    days: int = Query(7, ge=1, le=90),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    return DashboardService.daily_revenue(db, days)

@@ -6,6 +6,12 @@
   <title>Salethur Supermarket — Login</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
   <link rel="stylesheet" href="/static/style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+    });
+  </script>
   <meta name="description" content="Salethur Supermarket POS and CRM System — Login">
   <script>window.API_BASE = "{{ api_base }}";</script>
 </head>
@@ -14,7 +20,7 @@
   <div class="login-card">
 
     <div class="login-logo">
-      <div class="logo-icon">🛒</div>
+      <div class="logo-icon"><i data-lucide="shopping-cart" style="width: 48px; height: 48px; color: var(--accent);"></i></div>
       <div class="logo-name">Salethur Supermarket</div>
       <div class="logo-sub">Point of Sale &amp; CRM System</div>
     </div>
@@ -35,7 +41,7 @@
                required autocomplete="current-password">
       </div>
       <div style="margin-top: 20px;">
-        <button type="submit" class="btn btn-primary btn-full btn-xl">🔐 Sign In</button>
+        <button type="submit" class="btn btn-primary btn-full btn-xl"><i data-lucide="lock" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle;"></i>Sign In</button>
       </div>
     </form>
 
