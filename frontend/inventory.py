@@ -100,7 +100,8 @@ def show_inventory():
                         min_value=0.0 if is_float_unit else 0, 
                         step=0.5 if is_float_unit else 1
                     )
-                    new_desc = st.text_area("Description", value=selected.get("description") or "")
+                    #new_desc = st.text_area("Description", value=selected.get("description") or "")
+                    new_desc = None # Field commented out as per request
                     
                     if selected.get("image_data"):
                         st.image(f"data:image/jpeg;base64,{selected['image_data']}", caption="Current Image", width=150)
@@ -174,10 +175,11 @@ def show_inventory():
             step=0.5 if is_float_unit else 1, 
             key=f"new_min_{st.session_state.add_reset}"
         )
-        description = st.text_area("Description (optional)", key=f"new_desc_{st.session_state.add_reset}")
+        #description = st.text_area("Description (optional)", key=f"new_desc_{st.session_state.add_reset}")
+        description = None # Field commented out as per request
         product_image = st.file_uploader("Product Image (optional, jpg/png/webp)", type=["jpg", "jpeg", "png", "webp"], key=f"add_img_{st.session_state.add_reset}")
         
-        submitted = st.button("✅ Add Product", use_container_width=True)
+        submitted = st.button("Add Product", use_container_width=True)
 
         if submitted:
             if not name or price == 0:

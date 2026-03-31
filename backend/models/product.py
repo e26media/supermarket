@@ -28,7 +28,7 @@ class Product(Base):
     discount = Column(Float, default=0.0)          # default discount percentage
     stock_qty = Column(Integer, default=0)
     min_stock_alert = Column(Integer, default=5)   # alert threshold
-    description = Column(String(300), nullable=True)
+    # description = Column(String(300), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

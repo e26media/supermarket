@@ -13,29 +13,33 @@
     <div id="customer-inputs-section">
       <div class="form-group">
         <label class="form-label">Customer Name (optional)</label>
-        <input id="cust-name" type="text" class="form-control" placeholder="Walk-in customer" autocomplete="name">
+        <input id="cust-name" type="text" class="form-control" placeholder="Walk-in customer" autocomplete="name"
+               onkeydown="if(event.key==='Enter') handleNextClick(document.getElementById('btn-next-step1'))">
       </div>
       <div class="form-group">
         <label class="form-label">Phone Number (optional)</label>
-        <input id="cust-phone" type="tel" class="form-control" placeholder="+91 …" autocomplete="tel">
+        <input id="cust-phone" type="tel" class="form-control" placeholder="+91 …" autocomplete="tel"
+               onkeydown="if(event.key==='Enter') handleNextClick(document.getElementById('btn-next-step1'))">
       </div>
 
       <div style="display:flex; gap:8px; margin-top:20px;">
-        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-        <button class="btn btn-primary" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="handleNextClick(this)">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button id="btn-next-step1" type="button" class="btn btn-primary" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px;" 
+                onclick="handleNextClick(this)">
           Next <i data-lucide="arrow-right" style="width:16px; height:16px;"></i>
         </button>
       </div>
     </div>
 
     <!-- Hidden Confirmation Section -->
-    <div id="customer-confirm-section" style="display:none; text-align:center; padding: 10px 0;">
+    <div id="customer-confirm-section" style="display:none; text-align:center; padding: 10px 0; outline: none;" tabindex="-1"
+         onkeydown="if(event.key === 'Enter') { event.preventDefault(); document.getElementById('btn-confirm-yes').click(); }">
       <div style="margin-bottom: 20px; font-size: 0.95rem; font-weight: 500; color: var(--text); background: rgba(255,255,255,0.05); padding: 16px; border-radius: 8px; border: 1px solid var(--border, #444);">
         Do you want to continue without adding customer details?
       </div>
       <div style="display:flex; gap:8px; justify-content: center;">
-        <button class="btn btn-secondary" style="flex:1" onclick="showCustomerForm()">No</button>
-        <button class="btn btn-primary" style="flex:1" onclick="submitToPayment('', '', this)">
+        <button type="button" class="btn btn-secondary" style="flex:1" onclick="showCustomerForm()">No</button>
+        <button id="btn-confirm-yes" type="button" class="btn btn-primary" style="flex:1" onclick="submitToPayment('', '', this)">
           Yes
         </button>
       </div>
@@ -49,7 +53,9 @@ function handleNextClick(btn) {
   
   if (!name && !phone) {
     document.getElementById('customer-inputs-section').style.display = 'none';
-    document.getElementById('customer-confirm-section').style.display = 'block';
+    const confirmSection = document.getElementById('customer-confirm-section');
+    confirmSection.style.display = 'block';
+    confirmSection.focus();
   } else {
     submitToPayment(name, phone, btn);
   }

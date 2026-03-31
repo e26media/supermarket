@@ -191,7 +191,7 @@ async def inv_categories_tab(request: Request):
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
         <!-- Left Panel: Categories -->
         <div class="card">
-            <div class="card-title">📂 Categories</div>
+            <div class="card-title">Add Category</div>
             <form hx-post="/inventory/categories/add" hx-target="#category-list-container" hx-swap="innerHTML" style="margin-bottom:15px;">
                 <div class="form-group">
                     <label class="form-label">New Category Name</label>
@@ -208,7 +208,7 @@ async def inv_categories_tab(request: Request):
 
         <!-- Right Panel: Subcategories -->
         <div class="card">
-            <div class="card-title">🌿 Subcategories</div>
+            <div class="card-title">Add Subcategory</div>
             <div class="form-group" style="margin-bottom:15px;">
                 <label class="form-label">Select Category</label>
                 <select class="form-control" id="mgmt-category-select" name="category" 
@@ -1003,12 +1003,14 @@ async def inv_add_form(request: Request):
             <input class="form-control" type="file" name="image" accept="image/*">
           </div>
         </div>
-        <div class="form-group" style="grid-column:1/-1;">
-          <label class="form-label">Description</label>
-          <textarea class="form-control" name="description" rows="2" placeholder="Optional"></textarea>
-        </div>
+<!-- 
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="description" rows="2" placeholder="Optional"></textarea>
+          </div>
+ -->
         <div style="margin-top:16px;">
-          <button type="submit" class="btn btn-primary">✅ Add Product</button>
+          <button type="submit" class="btn btn-primary">Add Product</button>
         </div>
       </form>
     </div>""")
@@ -1047,7 +1049,10 @@ async def inv_create_product(request: Request,
         # Return the specific pydantic validation error message
         return HTMLResponse(f'<div style="color:var(--accent);padding:12px;background:rgba(255,0,0,0.1);border-radius:8px;">❌ {resp["error"]}</div>')
     if resp["data"]:
-        return RedirectResponse(url="/inventory/products", status_code=303)
+        # Return the products list partial directly with a trigger to switch the active tab
+        response = await inv_products(request)
+        response.headers["HX-Trigger"] = "productAdded"
+        return response
     return HTMLResponse("""<div style="color:var(--accent);padding:12px;">
         ❌ Failed to create product. Check all fields.</div>""")
 
@@ -1154,10 +1159,12 @@ async def inv_edit_form(request: Request, product_id: int):
             <input class="form-control" type="file" name="image" accept="image/*">
           </div>
         </div>
-        <div class="form-group" style="grid-column:1/-1;">
-          <label class="form-label">Description</label>
-          <textarea class="form-control" name="description" rows="2">{p.get('description','') or ''}</textarea>
-        </div>
+<!-- 
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="description" rows="2">{p.get('description','') or ''}</textarea>
+          </div>
+ -->
         <div style="margin-top:16px; display:flex; gap:10px;">
           <button type="submit" class="btn btn-primary">💾 Save Changes</button>
           <button type="button" class="btn btn-secondary" onclick="document.getElementById('inv-modal').style.display='none'">Cancel</button>
@@ -1289,6 +1296,17 @@ async def inv_restock_form(request: Request):
           }}
         }}
 
+        // Listen for the productAdded event from the server
+        document.body.addEventListener('productAdded', () => {{
+            console.log('Product added/restocked, switching to list tab...');
+            const listTab = document.getElementById('tab-list');
+            if (listTab) {{
+                switchInvTab(listTab);
+            }} else {{
+                console.warn('Could not find tab-list element');
+            }}
+        }});
+
         function selectRestockProduct() {{
           const select = document.getElementById('product-select');
           const selectedOption = select.options[select.selectedIndex];
@@ -1367,7 +1385,11 @@ async def inv_restock(request: Request,
                json={"product_id": product_id, "qty": qty, "reason": reason})
     if res["error"]:
         return HTMLResponse(f'<div style="color:var(--accent);padding:12px;background:rgba(255,0,0,0.1);border-radius:8px;">❌ {res["error"]}</div>')
-    return RedirectResponse(url="/inventory/products", status_code=303)
+    
+    # Return the products list partial directly with a trigger to switch the active tab
+    response = await inv_products(request)
+    response.headers["HX-Trigger"] = "productAdded"
+    return response
 
 
 @app.get("/inventory/stock-alerts", response_class=HTMLResponse)

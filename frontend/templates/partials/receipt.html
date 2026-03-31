@@ -1,6 +1,6 @@
 <!-- Modal Step 4: Receipt -->
 <div class="modal-backdrop">
-  <div class="modal" style="max-width:480px;" id="receipt-modal">
+  <div class="modal" style="max-width:480px; outline:none;" id="receipt-modal" tabindex="-1" onkeydown="handleReceiptKeydown(event)">
     <div class="modal-title" style="text-align:center;"><i data-lucide="check-circle" style="width:24px; height:24px; vertical-align:middle; margin-right:8px; color:var(--accent);"></i>Sale Complete!</div>
     <div class="modal-step-indicator">
       <div class="modal-step-dot active"></div>
@@ -77,3 +77,19 @@
     </div>
   </div>
 </div>
+<script>
+  function handleReceiptKeydown(e) {
+    if (e.key === 'Enter') {
+      const btn = document.querySelector('#receipt-modal .btn-primary');
+      if (btn && !btn.disabled) {
+        event.preventDefault();
+        btn.click();
+      }
+    }
+  }
+  // Focus for key capture
+  setTimeout(() => {
+    const m = document.getElementById('receipt-modal');
+    if (m) m.focus();
+  }, 50);
+</script>

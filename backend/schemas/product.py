@@ -31,7 +31,7 @@ class ProductCreate(BaseModel):
     discount: float = 0.0
     stock_qty: int = 0
     min_stock_alert: int = 5
-    description: Optional[str] = None
+    # description: Optional[str] = None
 
     @field_validator('stock_qty', 'min_stock_alert', mode='before')
     @classmethod
@@ -55,7 +55,7 @@ class ProductUpdate(BaseModel):
     discount: Optional[float] = None
     stock_qty: Optional[int] = None
     min_stock_alert: Optional[int] = None
-    description: Optional[str] = None
+    # description: Optional[str] = None
 
     @field_validator('stock_qty', 'min_stock_alert', mode='before')
     @classmethod
@@ -82,7 +82,7 @@ class ProductResponse(BaseModel):
     discount: float = 0.0
     stock_qty: int = 0
     min_stock_alert: int = 5
-    description: Optional[str] = None
+    # description: Optional[str] = None
     created_at: datetime
 
     @field_validator('stock_qty', 'min_stock_alert', mode='before')

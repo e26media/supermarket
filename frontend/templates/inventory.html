@@ -57,5 +57,16 @@ function switchInvTab(el) {
     }
     el.classList.add('active');
 }
+
+// Listen for the productAdded event from the server
+document.body.addEventListener('productAdded', () => {
+    console.log('Product added/restocked, switching to list tab...');
+    const listTab = document.getElementById('tab-list');
+    if (listTab) {
+        switchInvTab(listTab);
+    } else {
+        console.warn('Could not find tab-list element');
+    }
+});
 </script>
 {% endblock %}

@@ -1,6 +1,6 @@
 <!-- Modal Step 2: Payment Method -->
 <div class="modal-backdrop" onclick="if(event.target===this)closeModal()">
-  <div class="modal">
+  <div class="modal" id="payment-modal" tabindex="-1" onkeydown="handlePaymentKeydown(event)" style="outline:none">
     <div class="modal-title"><i data-lucide="credit-card" style="width:22px; height:22px; vertical-align:middle; margin-right:8px; color:var(--accent);"></i>Select Payment Method</div>
     <div class="modal-step-indicator">
       <div class="modal-step-dot active"></div>
@@ -56,11 +56,24 @@ function selectPayMethod(label, val) {
   label.style.borderColor = 'var(--accent)';
   label.style.background = 'rgba(233,69,96,0.1)';
 }
-// Mark first one selected on load
+// Mark first one selected on load and focus modal
 document.addEventListener('DOMContentLoaded', () => {
   const first = document.querySelector('#pay-methods label');
   if (first) selectPayMethod(first, 'cash');
+  const modal = document.getElementById('payment-modal');
+  if (modal) modal.focus();
 });
+
+// Handle Enter key for payment confirmation
+function handlePaymentKeydown(e) {
+  if (e.key === 'Enter') {
+    const btn = document.getElementById('pay-confirm-btn');
+    if (btn && !btn.disabled) {
+      event.preventDefault();
+      btn.click();
+    }
+  }
+}
 
 function submitPayment(btn, custName, custPhone, grandTotal) {
   const mode = document.querySelector('input[name=payment_mode]:checked')?.value || 'cash';
